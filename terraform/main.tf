@@ -23,7 +23,6 @@ resource "azurerm_resource_group" "sync_with_ig_rg" {
 data "azurerm_storage_account" "sync_with_ig_sa" {
   name                = "sabotgcmain"
   resource_group_name = "rg-botgc-shared"
-  location            = "westeurope"
 }
 
 resource "azurerm_service_plan" "sync_with_ig_asp" {

@@ -3,12 +3,12 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "sync_with_ig_rg" {
-  name     = "sync-with-ig-resources"
+  name     = "rg-${var.project_name}-${var.environment}"
   location = "West Europe"
 }
 
 resource "azurerm_storage_account" "sync_with_ig_sa" {
-  name                     = "syncwithigstorageacct"
+  name                     = "st${var.project_name}${var.environment}"
   resource_group_name      = azurerm_resource_group.sync_with_ig_rg.name
   location                 = azurerm_resource_group.sync_with_ig_rg.location
   account_tier             = "Standard"
@@ -16,7 +16,7 @@ resource "azurerm_storage_account" "sync_with_ig_sa" {
 }
 
 resource "azurerm_app_service_plan" "sync_with_ig_asp" {
-  name                = "sync-with-ig-appserviceplan"
+  name                = "asp-${var.project_name}-${var.environment}"
   location            = azurerm_resource_group.sync_with_ig_rg.location
   resource_group_name = azurerm_resource_group.sync_with_ig_rg.name
   sku {
@@ -26,7 +26,7 @@ resource "azurerm_app_service_plan" "sync_with_ig_asp" {
 }
 
 resource "azurerm_function_app" "sync_with_ig_fa" {
-  name                       = "sync-with-ig-function"
+  name                       = "fa-${var.project_name}-${var.environment}"
   location                   = azurerm_resource_group.sync_with_ig_rg.location
   resource_group_name        = azurerm_resource_group.sync_with_ig_rg.name
   app_service_plan_id        = azurerm_app_service_plan.sync_with_ig_asp.id
@@ -43,7 +43,7 @@ resource "azurerm_function_app" "sync_with_ig_fa" {
 }
 
 resource "azurerm_key_vault" "sync_with_ig_kv" {
-  name                = "syncwithigkeyvault"
+  name                = "kv-${var.project_name}-${var.environment}"
   location            = azurerm_resource_group.sync_with_ig_rg.location
   resource_group_name = azurerm_resource_group.sync_with_ig_rg.name
   tenant_id           = data.azurerm_client_config.example.tenant_id

@@ -13,7 +13,6 @@ provider "azurerm" {
 }
 
 
-
 data "azurerm_client_config" "example" {}
 
 resource "azurerm_resource_group" "sync_with_ig_rg" {

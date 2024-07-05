@@ -1,7 +1,7 @@
 terraform {
   backend "azurerm" {
-    resource_group_name  = "rg-botgcint-prd"
-    storage_account_name = "botgcmanagement"
+    resource_group_name  = "rg-botgc-shared"
+    storage_account_name = "sabotgcmain"
     container_name       = "tfstate"
     key                  = "terraform.tfstate"
   }
@@ -18,12 +18,10 @@ resource "azurerm_resource_group" "sync_with_ig_rg" {
   location = "West Europe"
 }
 
-resource "azurerm_storage_account" "sync_with_ig_sa" {
-  name                     = "st${var.project_name}${var.environment}"
-  resource_group_name      = azurerm_resource_group.sync_with_ig_rg.name
-  location                 = azurerm_resource_group.sync_with_ig_rg.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
+data "azurerm_storage_account" "sync_with_ig_sa" {
+  name                = "sabotgcmain"
+  resource_group_name = "rg-botgc-shared"
+  location            = "westeurope"
 }
 
 resource "azurerm_service_plan" "sync_with_ig_asp" {

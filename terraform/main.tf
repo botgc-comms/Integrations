@@ -15,7 +15,7 @@ resource "azurerm_storage_account" "sync_with_ig_sa" {
   account_replication_type = "LRS"
 }
 
-resource "azurerm_app_service_plan" "sync_with_ig_asp" {
+resource "azurerm_service_plan" "sync_with_ig_asp" {
   name                = "asp-${var.project_name}-${var.environment}"
   location            = azurerm_resource_group.sync_with_ig_rg.location
   resource_group_name = azurerm_resource_group.sync_with_ig_rg.name
@@ -29,7 +29,7 @@ resource "azurerm_function_app" "sync_with_ig_fa" {
   name                       = "fa-${var.project_name}-${var.environment}"
   location                   = azurerm_resource_group.sync_with_ig_rg.location
   resource_group_name        = azurerm_resource_group.sync_with_ig_rg.name
-  app_service_plan_id        = azurerm_app_service_plan.sync_with_ig_asp.id
+  service_plan_id            = azurerm_service_plan.sync_with_ig_asp.id
   storage_account_name       = azurerm_storage_account.sync_with_ig_sa.name
   storage_account_access_key = azurerm_storage_account.sync_with_ig_sa.primary_access_key
   version                    = "~2"
@@ -56,8 +56,8 @@ resource "azurerm_key_vault_access_policy" "sync_with_ig_kv_policy" {
   object_id    = azurerm_function_app.sync_with_ig_fa.identity[0].principal_id
 
   secret_permissions = [
-    "get",
-    "list",
+    "Get",
+    "List",
   ]
 }
 

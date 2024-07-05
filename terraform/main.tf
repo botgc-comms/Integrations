@@ -38,8 +38,8 @@ resource "azurerm_linux_function_app" "sync_with_ig_fa" {
   location                   = azurerm_resource_group.sync_with_ig_rg.location
   resource_group_name        = azurerm_resource_group.sync_with_ig_rg.name
   service_plan_id            = azurerm_service_plan.sync_with_ig_asp.id
-  storage_account_name       = azurerm_storage_account.sync_with_ig_sa.name
-  storage_account_access_key = azurerm_storage_account.sync_with_ig_sa.primary_access_key
+  storage_account_name       = data.azurerm_storage_account.sync_with_ig_sa.name
+  storage_account_access_key = data.azurerm_storage_account.sync_with_ig_sa.primary_access_key
 
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME" = "python"

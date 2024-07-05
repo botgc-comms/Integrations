@@ -76,7 +76,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r mailchimp_contacts/requirements.txt
+        pip install -r requirements.txt
       working-directory: mailchimp_contacts
 
     - name: Archive Function App

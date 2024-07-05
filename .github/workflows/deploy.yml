@@ -83,6 +83,7 @@ jobs:
       run: zip -r functionapp.zip .
       working-directory: mailchimp_contacts
 
+
     - name: Install Azure CLI
       uses: azure/cli@v1
 

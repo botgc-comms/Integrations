@@ -19,8 +19,10 @@ resource "azurerm_service_plan" "sync_with_ig_asp" {
   name                = "asp-${var.project_name}-${var.environment}"
   location            = azurerm_resource_group.sync_with_ig_rg.location
   resource_group_name = azurerm_resource_group.sync_with_ig_rg.name
+  os_type             = "Linux"
+
   sku {
-    tier = "Consumption"
+    tier = "Dynamic"
     size = "Y1"
   }
 }
@@ -29,7 +31,7 @@ resource "azurerm_function_app" "sync_with_ig_fa" {
   name                       = "fa-${var.project_name}-${var.environment}"
   location                   = azurerm_resource_group.sync_with_ig_rg.location
   resource_group_name        = azurerm_resource_group.sync_with_ig_rg.name
-  service_plan_id            = azurerm_service_plan.sync_with_ig_asp.id
+  app_service_plan_id        = azurerm_service_plan.sync_with_ig_asp.id
   storage_account_name       = azurerm_storage_account.sync_with_ig_sa.name
   storage_account_access_key = azurerm_storage_account.sync_with_ig_sa.primary_access_key
   version                    = "~2"

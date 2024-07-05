@@ -2,6 +2,8 @@ provider "azurerm" {
   features {}
 }
 
+data "azurerm_client_config" "example" {}
+
 resource "azurerm_resource_group" "sync_with_ig_rg" {
   name     = "rg-${var.project_name}-${var.environment}"
   location = "West Europe"
@@ -58,10 +60,9 @@ resource "azurerm_key_vault_access_policy" "sync_with_ig_kv_policy" {
   secret_permissions = [
     "Get",
     "List",
+    "Set"
   ]
 }
-
-data "azurerm_client_config" "example" {}
 
 resource "azurerm_key_vault_secret" "member_id" {
   name         = "member-id"

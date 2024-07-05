@@ -8,7 +8,7 @@ on:
       - 'mailchimp_contacts/sync_with_ig.py'
       - 'mailchimp_contacts/requirements.txt'
       - 'terraform/**'
-      - '.github/workflows/deployment.yml'
+      - '.github/workflows/*.yml'
 
 jobs:
   terraform:

@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - 'sync_with_ig.py'
+      - 'requirements.txt'
+      - '.github/workflows/deploy-function.yml'
 
 jobs:
   build-and-deploy:

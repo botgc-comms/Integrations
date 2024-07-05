@@ -53,3 +53,4 @@ jobs:
     - name: Get Function App Name
       id: output
       run: echo "::set-output name=function_app_name::$(terraform output -raw function_app_name)"
+      working-directory: ./terraform

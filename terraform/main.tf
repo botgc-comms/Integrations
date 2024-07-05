@@ -23,14 +23,15 @@ resource "azurerm_service_plan" "sync_with_ig_asp" {
   sku_name            = "Y1" # This is the consumption plan for cost-effectiveness
 }
 
-resource "azurerm_function_app" "sync_with_ig_fa" {
-  name                       = "fa-${var.project_name}-${var.environment}"
+resource "azurerm_linux_function_app" "sync_with_ig_fa" {
+  name                = "fa-${var.project_name}-${var.environment}"
   location                   = azurerm_resource_group.sync_with_ig_rg.location
   resource_group_name        = azurerm_resource_group.sync_with_ig_rg.name
   service_plan_id            = azurerm_service_plan.sync_with_ig_asp.id
   storage_account_name       = azurerm_storage_account.sync_with_ig_sa.name
   storage_account_access_key = azurerm_storage_account.sync_with_ig_sa.primary_access_key
-  version                    = "~2"
+  service_plan_id            = azurerm_service_plan.sync_with_ig_asp.id
+
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME" = "python"
     "WEBSITE_RUN_FROM_PACKAGE" = "1"
@@ -38,6 +39,8 @@ resource "azurerm_function_app" "sync_with_ig_fa" {
   identity {
     type = "SystemAssigned"
   }
+
+  site_config {}
 }
 
 resource "azurerm_key_vault" "sync_with_ig_kv" {
@@ -51,7 +54,7 @@ resource "azurerm_key_vault" "sync_with_ig_kv" {
 resource "azurerm_key_vault_access_policy" "sync_with_ig_kv_policy" {
   key_vault_id = azurerm_key_vault.sync_with_ig_kv.id
   tenant_id    = data.azurerm_client_config.example.tenant_id
-  object_id    = azurerm_function_app.sync_with_ig_fa.identity[0].principal_id
+  object_id    = azurerm_linux_function_app.sync_with_ig_fa.identity[0].principal_id
 
   secret_permissions = [
     "Get",

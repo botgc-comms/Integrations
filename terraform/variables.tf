@@ -5,21 +5,27 @@ variable "project_name" {
 
 variable "environment" {
   type        = string
-  description = "The environment (e.g., dev, prod)"
+  description = "The environment (e.g., dev, prd)"
+  default     = "prd"
 }
 
 variable "member_id" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "member_pin" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "admin_password" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "mailchimp_api_key" {
-  type = string
+  type    = string
+  default = ""
 }
+

@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '**.tf'
+      - '.github/workflows/deploy-terraform.yml'
 
 jobs:
   terraform:
@@ -28,3 +29,7 @@ jobs:
         ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        TF_VAR_member_id: ${{ secrets.MEMBER_ID }}
+        TF_VAR_member_pin: ${{ secrets.MEMBER_PIN }}
+        TF_VAR_admin_password: ${{ secrets.ADMIN_PASSWORD }}
+        TF_VAR_mailchimp_api_key: ${{ secrets.MAILCHIMP_API_KEY }}

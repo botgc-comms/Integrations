@@ -35,6 +35,7 @@ jobs:
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
     - name: Terraform Apply
+      id: apply
       run: terraform apply -auto-approve
       working-directory: ./terraform
       env:
@@ -48,3 +49,7 @@ jobs:
         TF_VAR_member_pin: ${{ secrets.MEMBER_PIN }}
         TF_VAR_admin_password: ${{ secrets.ADMIN_PASSWORD }}
         TF_VAR_mailchimp_api_key: ${{ secrets.MAILCHIMP_API_KEY }}
+
+    - name: Get Function App Name
+      id: output
+      run: echo "::set-output name=function_app_name::$(terraform output -raw function_app_name)"

@@ -58,7 +58,6 @@ resource "azurerm_key_vault" "sync_with_ig_kv" {
   sku_name            = "standard"
 }
 
-# Access policy for the Azure Function App's managed identity
 resource "azurerm_key_vault_access_policy" "sync_with_ig_kv_policy" {
   key_vault_id = azurerm_key_vault.sync_with_ig_kv.id
   tenant_id    = data.azurerm_client_config.example.tenant_id
@@ -71,7 +70,6 @@ resource "azurerm_key_vault_access_policy" "sync_with_ig_kv_policy" {
   ]
 }
 
-# Access policy for the service principal running Terraform
 resource "azurerm_key_vault_access_policy" "terraform_sp_kv_policy" {
   key_vault_id = azurerm_key_vault.sync_with_ig_kv.id
   tenant_id    = data.azurerm_client_config.example.tenant_id
@@ -106,4 +104,8 @@ resource "azurerm_key_vault_secret" "mailchimp_api_key" {
   name         = "mailchimp-api-key"
   value        = var.mailchimp_api_key
   key_vault_id = azurerm_key_vault.sync_with_ig_kv.id
+}
+
+output "function_app_name" {
+  value = azurerm_linux_function_app.sync_with_ig_fa.name
 }

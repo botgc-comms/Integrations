@@ -38,16 +38,18 @@ resource "azurerm_linux_function_app" "sync_with_ig_fa" {
   service_plan_id            = azurerm_service_plan.sync_with_ig_asp.id
   storage_account_name       = data.azurerm_storage_account.sync_with_ig_sa.name
   storage_account_access_key = data.azurerm_storage_account.sync_with_ig_sa.primary_access_key
-
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME" = "python"
+    "PYTHON_VERSION"           = "3.8"
     "WEBSITE_RUN_FROM_PACKAGE" = "1"
+  }
+
+  site_config {
+    linux_fx_version = "python|3.8"
   }
   identity {
     type = "SystemAssigned"
   }
-
-  site_config {}
 }
 
 resource "azurerm_key_vault" "sync_with_ig_kv" {

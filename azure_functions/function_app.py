@@ -2,7 +2,12 @@ import logging
 import azure.functions as func
 from mailchimp_sync import main as mailchimp_sync_main
 # from other_function import main as other_function_main
+import azure.functions as func
 
+app = func.FunctionApp()
+
+@app.function_name(name="HttpTrigger1")
+@app.route(route="req")
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('HTTP trigger function processed a request.')
 

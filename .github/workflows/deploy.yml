@@ -14,6 +14,9 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
 
+    outputs:
+      function_app_name: ${{ steps.function_app_name.outputs.function_app_name }}
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -55,45 +58,22 @@ jobs:
         TF_VAR_admin_password: ${{ secrets.ADMIN_PASSWORD }}
         TF_VAR_mailchimp_api_key: ${{ secrets.MAILCHIMP_API_KEY }}
 
-    - name: Debug Terraform Output
-      run: |
-        echo "Terraform output:"
-        terraform output -json
-      working-directory: ./terraform
-      env:
-        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
     - name: Get Function App Name
-      id: output
+      id: function_app_name
       run: |
         function_app_name=$(terraform output -raw function_app_name)
         echo "function_app_name=${function_app_name}"
-        echo "function_app_name=${function_app_name}" &gt;&gt; $env:GITHUB_ENV
+        echo "function_app_name=${function_app_name}" >> "$GITHUB_OUTPUT"
       working-directory: ./terraform
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
-    - name: Test
-      run: echo $function_app_name
-
-    - name: Export function app name
-      id: function_app_name
-      run: "::set-output name=function_app_name::${{ env.function_app_name }}"
-
-    outputs:
-      function_app_name: ${{ steps.function_app_name.outputs.function_app_name }}
 
   deploy-function:
     runs-on: ubuntu-latest
     needs: terraform  # Ensures this job runs after the terraform job
-    env:
-      function_app_name: ${{needs.terraform.outputs.function_app_name}}
 
     steps:
     - name: Checkout code
@@ -121,16 +101,6 @@ jobs:
       run: |
         curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
-    - name: Debug Environment Variables
-      run: |
-        echo "All Secrets: $ALLMYSECRETS"
-        echo "All Vars: $ALLMYVARS"
-        echo "Function App Name: $function_app_name"
-      env:
-        ALLMYSECRETS: ${{ toJSON(secrets) }}
-        ALLMYVARS: ${{ toJSON(steps) }}
-        function_app_name: ${{ env.function_app_name }}
-
     - name: Azure CLI Login
       run: |
         az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
@@ -140,4 +110,4 @@ jobs:
         az functionapp deployment source config-zip -g rg-botgcint-prd -n ${{ env.function_app_name }} --src functionapp.zip
       working-directory: mailchimp_contacts
       env:
-        function_app_name: ${{ env.function_app_name }}
+        function_app_name: ${{needs.terraform.outputs.function_app_name}}

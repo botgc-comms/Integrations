@@ -68,7 +68,8 @@ jobs:
 
     - name: Get Function App Name
       run: |
-        function_app_name=$(terraform output -raw function_app_name)
+        function_app_name=$(terraform output function_app_name)
+        echo "${function_app_name}"
         echo "function_app_name=${function_app_name}" >> $GITHUB_OUTPUT
       working-directory: ./terraform
       env:

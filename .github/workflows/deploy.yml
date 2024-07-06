@@ -69,9 +69,9 @@ jobs:
     - name: Get Function App Name
       id: output
       run: |
-        function_app_name=$(terraform output function_app_name)
-        echo "${function_app_name}"
-        echo "function_app_name=${function_app_name}" >> "$GITHUB_OUTPUT"
+        function_app_name=$(terraform output -raw function_app_name)
+        echo "function_app_name=${function_app_name}"
+        echo "function_app_name=${function_app_name}" >> $GITHUB_ENV
       working-directory: ./terraform
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -106,21 +106,23 @@ jobs:
       run: |
         curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
-    - run: |
-        echo "$ALLMYSECRETS"
-        echo "$ALLMYVARS"
-      shell: bash
+    - name: Debug Environment Variables
+      run: |
+        echo "All Secrets: $ALLMYSECRETS"
+        echo "All Vars: $ALLMYVARS"
+        echo "Function App Name: $function_app_name"
       env:
         ALLMYSECRETS: ${{ toJSON(secrets) }}
         ALLMYVARS: ${{ toJSON(steps) }}
-        
+        function_app_name: ${{ env.function_app_name }}
+
     - name: Azure CLI Login
       run: |
         az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
 
     - name: Deploy to Azure Function
       run: |
-        az functionapp deployment source config-zip -g rg-botgcint-prd -n "$FUNCTIONNAME" --src functionapp.zip
+        az functionapp deployment source config-zip -g rg-botgcint-prd -n ${{ env.function_app_name }} --src functionapp.zip
       working-directory: mailchimp_contacts
       env:
-        FUNCTIONNAME: ${{steps.output.outputs.function_app_name}}
+        function_app_name: ${{ env.function_app_name }}

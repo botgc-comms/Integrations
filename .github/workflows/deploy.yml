@@ -82,6 +82,13 @@ jobs:
     - name: Test
       run: echo $function_app_name
 
+    - name: Export function app name
+      id: function_app_name
+      run: "::set-output name=function_app_name::${{ env.function_app_name }}"
+
+    outputs:
+      function_app_name: ${{ steps.function_app_name.outputs.function_app_name }}
+
   deploy-function:
     runs-on: ubuntu-latest
     needs: terraform  # Ensures this job runs after the terraform job

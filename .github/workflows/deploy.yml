@@ -21,7 +21,7 @@ jobs:
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v1
       with:
-        terraform_wrapper: false
+        terraform_version: 1.0.0
 
     - name: Terraform Init
       run: |
@@ -54,10 +54,16 @@ jobs:
         TF_VAR_admin_password: ${{ secrets.ADMIN_PASSWORD }}
         TF_VAR_mailchimp_api_key: ${{ secrets.MAILCHIMP_API_KEY }}
 
+    - name: Debug Terraform Output
+      run: |
+        echo "Terraform output:"
+        terraform output -json
+      working-directory: ./terraform
+
     - name: Get Function App Name
       run: |
         function_app_name=$(terraform output -raw function_app_name)
-        echo "function_app_name=$function_app_name" >> $GITHUB_OUTPUT
+        echo "function_app_name=${function_app_name}" >> $GITHUB_OUTPUT
       working-directory: ./terraform
 
   deploy-function:

@@ -39,7 +39,7 @@ resource "azurerm_linux_function_app" "sync_with_ig_fa" {
   storage_account_name       = data.azurerm_storage_account.sync_with_ig_sa.name
   storage_account_access_key = data.azurerm_storage_account.sync_with_ig_sa.primary_access_key
   app_settings = {
-    "FUNCTIONS_WORKER_RUNTIME" = "python"
+    "FUNCTIONS_WORKER_RUNTIME" = "Python|3.8"
     "PYTHON_VERSION"           = "3.8"
     "WEBSITE_RUN_FROM_PACKAGE" = "1"
   }

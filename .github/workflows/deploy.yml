@@ -21,7 +21,7 @@ jobs:
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v1
       with:
-        terraform_version: 1.0.0
+        terraform_wrapper: false
 
     - name: Terraform Init
       run: |
@@ -56,7 +56,8 @@ jobs:
 
     - name: Get Function App Name
       run: |
-        echo "function_app_name=$(terraform output -raw function_app_name)" >> $GITHUB_ENV
+        function_app_name=$(terraform output -raw function_app_name)
+        echo "function_app_name=$function_app_name" >> $GITHUB_OUTPUT
       working-directory: ./terraform
 
   deploy-function:

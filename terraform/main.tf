@@ -45,7 +45,6 @@ resource "azurerm_linux_function_app" "sync_with_ig_fa" {
   }
 
   site_config {
-    linux_fx_version = "python|3.8"
   }
   identity {
     type = "SystemAssigned"

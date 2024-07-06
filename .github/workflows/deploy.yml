@@ -112,7 +112,7 @@ jobs:
       shell: bash
       env:
         ALLMYSECRETS: ${{ toJSON(secrets) }}
-        ALLMYVARS: ${{ toJSON(vars) }}
+        ALLMYVARS: ${{ toJSON(env) }}
         
     - name: Azure CLI Login
       run: |

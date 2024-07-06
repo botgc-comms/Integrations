@@ -10,18 +10,26 @@ import json
 from colorama import init, Fore, Style
 import os
 import logging
+from applicationinsights import TelemetryClient
 import azure.functions as func
+
+app = func.FunctionApp()
 
 # Initialize a session for persistent connections
 session = requests.Session()
 
 init(autoreset=True)
 
+# Initialize Application Insights Telemetry Client
+tc = TelemetryClient(os.environ["APPINSIGHTS_INSTRUMENTATION_KEY"])
+
 def print_success(message):
     logging.info(message)
+    tc.track_trace(message, severity='INFO')
 
 def print_error(message):
     logging.error(message)
+    tc.track_trace(message, severity='ERROR')
 
 def member_login():
     login_url = "https://www.botgc.co.uk/login.php"
@@ -36,8 +44,10 @@ def member_login():
     response = session.post(login_url, headers=headers, data=data)
     if response.ok:
         logging.info("First login successful!")
+        tc.track_trace("First login successful!")
     else:
         logging.error("First login failed.")
+        tc.track_trace("First login failed.", severity='ERROR')
         return False
     return True
 
@@ -49,8 +59,10 @@ def obtain_admin_rights():
     response = session.post(second_login_url, data=second_login_data)
     if response.ok:
         logging.info("Second login successful!")
+        tc.track_trace("Second login successful!")
     else:
         logging.error("Second login failed.")
+        tc.track_trace("Second login failed.", severity='ERROR')
         return False
     return True
 
@@ -59,9 +71,11 @@ def execute_report():
     response = session.get(report_url)
     if response.ok:
         logging.info("Successfully accessed the report.")
+        tc.track_trace("Successfully accessed the report.")
         return BeautifulSoup(response.content, 'html.parser')
     else:
         logging.error("Failed to access the report.")
+        tc.track_trace("Failed to access the report.", severity='ERROR')
         return None
 
 def extract_data(soup):
@@ -95,6 +109,7 @@ def map_data_to_merge_fields(table_rows):
                 continue  # Skip this row and move to the next one
         except ValueError:
             logging.warning(f"Warning: Unable to process account number '{row[0]}'. Skipping row.")
+            tc.track_trace(f"Warning: Unable to process account number '{row[0]}'. Skipping row.", severity='WARNING')
             continue
 
         addr2_parts = []
@@ -152,7 +167,7 @@ def map_data_to_merge_fields(table_rows):
 
     return merge_fields_collection
 
-def update_mailchimp_subscriber(client, audience_id, merge_fields):
+def update_mailchimp_subscriber(client, audience_id, merge_fields, stats):
     email_address = merge_fields["EMAIL"]
     subscriber_hash = hashlib.md5(email_address.lower().encode('utf-8')).hexdigest()
 
@@ -164,7 +179,12 @@ def update_mailchimp_subscriber(client, audience_id, merge_fields):
 
     try:
         response = client.lists.set_list_member(audience_id, subscriber_hash, body)
-        print_success(f"Successfully updated/added {email_address}")
+        if response['status'] == 'subscribed':
+            stats['added'] += 1
+            print_success(f"Successfully added {email_address}")
+        else:
+            stats['updated'] += 1
+            print_success(f"Successfully updated {email_address}")
     except ApiClientError as error:
         print_error(f"Error updating/adding {email_address}: {error.text} {merge_fields}")
 
@@ -178,8 +198,13 @@ def update_mailchimp(merge_fields_collection):
 
         audience_id = os.environ["MAILCHIMP_AUDIENCE_ID"]
 
+        stats = {
+            'added': 0,
+            'updated': 0
+        }
+
         with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [executor.submit(update_mailchimp_subscriber, client, audience_id, merge_fields)
+            futures = [executor.submit(update_mailchimp_subscriber, client, audience_id, merge_fields, stats)
                        for merge_fields in merge_fields_collection]
 
             for future in as_completed(futures):
@@ -187,6 +212,13 @@ def update_mailchimp(merge_fields_collection):
                     future.result()
                 except Exception as e:
                     print_error(f"Error in processing: {e}")
+
+        logging.info(f"Mailchimp Update Summary: {stats['added']} added, {stats['updated']} updated")
+        tc.track_event("Mailchimp Update Summary", {
+            "added": stats['added'],
+            "updated": stats['updated']
+        })
+        tc.flush()
 
     except ApiClientError as error:
         print_error("Error: {}".format(error.text))
@@ -210,9 +242,14 @@ headers = {
     "Accept-Language": "en-GB,en;q=0.9",
 }
 
-def main(mytimer: func.TimerRequest) -> None:
+@app.function_name(name="HttpTrigger1")
+@app.route(route="req")
+def main(req: func.HttpRequest) -> None:
+    tc.track_trace("Script execution started.")
     if member_login() and obtain_admin_rights():
         soup = execute_report()
         data = extract_data(soup)
         merge_field_collection = map_data_to_merge_fields(data)
         update_mailchimp(merge_field_collection)
+    tc.track_trace("Script execution completed.")
+    tc.flush()

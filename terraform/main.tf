@@ -40,13 +40,14 @@ resource "azurerm_linux_function_app" "sync_with_ig_fa" {
   storage_account_access_key  = data.azurerm_storage_account.sync_with_ig_sa.primary_access_key
   functions_extension_version = "~4"
   app_settings = {
-    "WEBSITE_RUN_FROM_PACKAGE" = "1"
-    "MEMBER_ID"                = var.member_id
-    "MEMBER_PIN"               = var.member_pin
-    "ADMIN_PASSWORD"           = var.admin_password
-    "MAILCHIMP_API_KEY"        = var.mailchimp_api_key
-    "MAILCHIMP_SERVER"         = var.mailchimp_server
-    "MAILCHIMP_AUDIENCE_ID"    = var.mailchimp_audience_id
+    "APPINSIGHTS_INSTRUMENTATION_KEY" = azurerm_application_insights.app_insights.instrumentation_key
+    "WEBSITE_RUN_FROM_PACKAGE"        = "1"
+    "MEMBER_ID"                       = var.member_id
+    "MEMBER_PIN"                      = var.member_pin
+    "ADMIN_PASSWORD"                  = var.admin_password
+    "MAILCHIMP_API_KEY"               = var.mailchimp_api_key
+    "MAILCHIMP_SERVER"                = var.mailchimp_server
+    "MAILCHIMP_AUDIENCE_ID"           = var.mailchimp_audience_id
   }
 
   site_config {
@@ -115,6 +116,17 @@ resource "azurerm_key_vault_secret" "mailchimp_api_key" {
   key_vault_id = azurerm_key_vault.sync_with_ig_kv.id
 }
 
+resource "azurerm_application_insights" "app_insights" {
+  name                = "app-insights-${var.project_name}-${var.environment}"
+  location            = azurerm_resource_group.sync_with_ig_rg.location
+  resource_group_name = azurerm_resource_group.sync_with_ig_rg.name
+  application_type    = "web"
+}
+
 output "function_app_name" {
   value = azurerm_linux_function_app.sync_with_ig_fa.name
+}
+
+output "app_insights_instrumentation_key" {
+  value = azurerm_application_insights.app_insights.instrumentation_key
 }

@@ -57,7 +57,7 @@ jobs:
     - name: Get Function App Name
       run: |
         function_app_name=$(terraform output -raw function_app_name)
-        echo "function_app_name=${function_app_name}" >> $GITHUB_ENV
+        echo "function_app_name=${function_app_name}" >> $GITHUB_OUTPUT
       working-directory: ./terraform
 
   deploy-function:
@@ -93,6 +93,6 @@ jobs:
 
     - name: Deploy to Azure Function
       run: |
-        echo "Deploying to Function App: ${{ env.function_app_name }}"
-        az functionapp deployment source config-zip -g rg-botgcint-prd -n ${{ env.function_app_name }} --src functionapp.zip
+        echo "Deploying to Function App: ${{ steps.apply.outputs.function_app_name }}"
+        az functionapp deployment source config-zip -g rg-botgcint-prd -n ${{ steps.apply.outputs.function_app_name }} --src functionapp.zip
       working-directory: mailchimp_contacts

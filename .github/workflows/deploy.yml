@@ -112,7 +112,7 @@ jobs:
 
     - name: Deploy to Azure Function
       run: |
-        az functionapp deployment source config-zip -g rg-botgcint-prd -n ${{ env.function_app_name }} --src functionapp.zip
+        az functionapp deployment source config-zip -g rg-botgcint-prd -n "$FUNCTIONNAME" --src functionapp.zip
       working-directory: mailchimp_contacts
       env:
-        function_app_name: ${{steps.output.outputs.function_app_name}}
+        FUNCTIONNAME: ${{steps.output.outputs.function_app_name}}

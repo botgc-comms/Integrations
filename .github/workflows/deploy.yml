@@ -55,8 +55,7 @@ jobs:
         TF_VAR_mailchimp_api_key: ${{ secrets.MAILCHIMP_API_KEY }}
 
     - name: Get Function App Name
-      run: |
-        echo "function_app_name=$(terraform output -raw function_app_name)" >> $GITHUB_ENV
+      run: echo "function_app_name=$(terraform output -raw function_app_name)" >> $GITHUB_ENV
       working-directory: ./terraform
 
   deploy-function:

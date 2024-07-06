@@ -54,17 +54,10 @@ jobs:
         TF_VAR_admin_password: ${{ secrets.ADMIN_PASSWORD }}
         TF_VAR_mailchimp_api_key: ${{ secrets.MAILCHIMP_API_KEY }}
 
-    - name: Debug Terraform Output
-      run: |
-        echo "Terraform output:"
-        terraform output -raw function_app_name
-
     - name: Get Function App Name
-      id: get_output
       run: |
         function_app_name=$(terraform output -raw function_app_name)
-        echo "::set-output name=function_app_name::$function_app_name"
-        echo "function_app_name=$function_app_name" >> $GITHUB_ENV
+        echo "function_app_name=${function_app_name}" >> $GITHUB_ENV
       working-directory: ./terraform
 
   deploy-function:

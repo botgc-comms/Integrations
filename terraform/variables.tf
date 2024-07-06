@@ -29,3 +29,13 @@ variable "mailchimp_api_key" {
   default = ""
 }
 
+variable "mailchimp_server" {
+  type    = string
+  default = ""
+}
+
+variable "mailchimp_audience_id" {
+  type    = string
+  default = ""
+}
+

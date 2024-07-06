@@ -41,6 +41,12 @@ resource "azurerm_linux_function_app" "sync_with_ig_fa" {
   functions_extension_version = "~4"
   app_settings = {
     "WEBSITE_RUN_FROM_PACKAGE" = "1"
+    "MEMBER_ID"                = var.member_id
+    "MEMBER_PIN"               = var.member_pin
+    "ADMIN_PASSWORD"           = var.admin_password
+    "MAILCHIMP_API_KEY"        = var.mailchimp_api_key
+    "MAILCHIMP_SERVER"         = var.mailchimp_server
+    "MAILCHIMP_AUDIENCE_ID"    = var.mailchimp_audience_id
   }
 
   site_config {

@@ -8,7 +8,8 @@ on:
       - 'mailchimp_contacts/sync_with_ig.py'
       - 'mailchimp_contacts/requirements.txt'
       - 'terraform/**'
-      - '.github/workflows/*.yml'
+      - '.github/workflows/deploy-function.yml'
+      - '.github/workflows/deploy-terraform.yml'
 
 jobs:
   terraform:
@@ -55,8 +56,8 @@ jobs:
         TF_VAR_mailchimp_api_key: ${{ secrets.MAILCHIMP_API_KEY }}
 
     - name: Get Function App Name
-      id: output
-      run: echo "::set-output name=function_app_name::$(terraform output -raw function_app_name)"
+      run: |
+        echo "function_app_name=$(terraform output -raw function_app_name)" >> $GITHUB_ENV
       working-directory: ./terraform
 
   deploy-function:
@@ -75,7 +76,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install -r mailchimp_contacts/requirements.txt
       working-directory: mailchimp_contacts
 
     - name: Archive Function App
@@ -92,5 +93,5 @@ jobs:
 
     - name: Deploy to Azure Function
       run: |
-        az functionapp deployment source config-zip -g rg-botgcint-prd -n ${{ needs.terraform.outputs.function_app_name }} --src functionapp.zip
+        az functionapp deployment source config-zip -g rg-botgcint-prd -n ${{ env.function_app_name }} --src functionapp.zip
       working-directory: mailchimp_contacts

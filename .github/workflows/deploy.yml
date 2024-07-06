@@ -67,6 +67,7 @@ jobs:
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
     - name: Get Function App Name
+      id: output
       run: |
         function_app_name=$(terraform output function_app_name)
         echo "${function_app_name}"
@@ -114,4 +115,4 @@ jobs:
         az functionapp deployment source config-zip -g rg-botgcint-prd -n ${{ env.function_app_name }} --src functionapp.zip
       working-directory: mailchimp_contacts
       env:
-        function_app_name: ${{steps.vars.outputs.function_app_name}}
+        function_app_name: ${{steps.output.outputs.function_app_name}}

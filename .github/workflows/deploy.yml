@@ -54,8 +54,17 @@ jobs:
         TF_VAR_admin_password: ${{ secrets.ADMIN_PASSWORD }}
         TF_VAR_mailchimp_api_key: ${{ secrets.MAILCHIMP_API_KEY }}
 
+    - name: Debug Terraform Output
+      run: |
+        echo "Terraform output:"
+        terraform output -raw function_app_name
+
     - name: Get Function App Name
-      run: echo "function_app_name=$(terraform output -raw function_app_name)" >> $GITHUB_ENV
+      id: get_output
+      run: |
+        function_app_name=$(terraform output -raw function_app_name)
+        echo "::set-output name=function_app_name::$function_app_name"
+        echo "function_app_name=$function_app_name" >> $GITHUB_ENV
       working-directory: ./terraform
 
   deploy-function:
@@ -91,5 +100,6 @@ jobs:
 
     - name: Deploy to Azure Function
       run: |
+        echo "Deploying to Function App: ${{ env.function_app_name }}"
         az functionapp deployment source config-zip -g rg-botgcint-prd -n ${{ env.function_app_name }} --src functionapp.zip
       working-directory: mailchimp_contacts

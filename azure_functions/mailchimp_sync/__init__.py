@@ -308,6 +308,8 @@ def update_mailchimp_async(merge_fields_collection):
 
     logging.info("Exiting update_mailchimp_async with %d added and %d updated", added_count, updated_count)
 
+    return added_count, updated_count
+
 
 def main(req: HttpRequest) -> HttpResponse:
     logging.info("Azure function 'mailchimp_sync' triggered.")
@@ -315,14 +317,16 @@ def main(req: HttpRequest) -> HttpResponse:
         soup = execute_report()
         data = extract_data(soup)
         merge_field_collection = map_data_to_merge_fields(data)
-        update_mailchimp_async(merge_field_collection)
+        added_count, updated_count = update_mailchimp_async(merge_field_collection)
         if tc:
             tc.track_event("Function executed successfully")
             tc.flush()
     
+    response_message = (
+        f"Azure function 'mailchimp_sync' completed. "
+        f"Added: {added_count}, Updated: {updated_count}"
+    )
+
     logging.info("Azure function 'mailchimp_sync' completed.")
 
-    return HttpResponse(
-            "Azure function 'mailchimp_sync' completed.",
-            status_code=200
-        )
+    return HttpResponse(response_message, status_code=200)

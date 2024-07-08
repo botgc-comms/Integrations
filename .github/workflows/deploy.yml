@@ -94,7 +94,9 @@ jobs:
       working-directory: azure_functions
 
     - name: Archive Function App
-      run: zip -r functionapp.zip .
+      run: |
+        cd azure_functions
+        zip -r ../functionapp.zip .
       working-directory: azure_functions
 
     - name: Install Azure CLI

@@ -41,6 +41,7 @@ resource "azurerm_linux_function_app" "sync_with_ig_fa" {
   functions_extension_version = "~4"
   app_settings = {
     "APPINSIGHTS_INSTRUMENTATION_KEY" = azurerm_application_insights.app_insights.instrumentation_key
+    SCM_DO_BUILD_DURING_DEPLOYMENT    = true
     "WEBSITE_RUN_FROM_PACKAGE"        = "1"
     "MEMBER_ID"                       = var.member_id
     "MEMBER_PIN"                      = var.member_pin

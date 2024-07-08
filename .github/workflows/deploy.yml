@@ -91,7 +91,7 @@ jobs:
       working-directory: azure_functions
 
     - name: Archive Function App
-      run: zip -r functionapp.zip .
+      run: zip -r functionapp.zip . -x '*__pycache__*' 
       working-directory: azure_functions
 
     - name: Install Azure CLI
@@ -104,5 +104,5 @@ jobs:
 
     - name: Deploy to Azure Function
       run: |
-        az functionapp deployment source config-zip -g rg-botgcint-prd -n ${{ needs.terraform.outputs.function_app_name }} --src functionapp.zip
+        az functionapp deployment source config-zip -g rg-botgcint-prd -n ${{ needs.terraform.outputs.function_app_name }} --src functionapp.zip --build-remote true --verbose
       working-directory: azure_functions

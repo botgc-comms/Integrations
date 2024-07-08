@@ -40,15 +40,16 @@ resource "azurerm_linux_function_app" "sync_with_ig_fa" {
   storage_account_access_key  = data.azurerm_storage_account.sync_with_ig_sa.primary_access_key
   functions_extension_version = "~4"
   app_settings = {
-    "APPINSIGHTS_INSTRUMENTATION_KEY" = azurerm_application_insights.app_insights.instrumentation_key
-    SCM_DO_BUILD_DURING_DEPLOYMENT    = true
-    "WEBSITE_RUN_FROM_PACKAGE"        = "1"
-    "MEMBER_ID"                       = var.member_id
-    "MEMBER_PIN"                      = var.member_pin
-    "ADMIN_PASSWORD"                  = var.admin_password
-    "MAILCHIMP_API_KEY"               = var.mailchimp_api_key
-    "MAILCHIMP_SERVER"                = var.mailchimp_server
-    "MAILCHIMP_AUDIENCE_ID"           = var.mailchimp_audience_id
+    "APPINSIGHTS_INSTRUMENTATIONKEY"        = azurerm_application_insights.app_insights.instrumentation_key
+    "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.app_insights.connection_string
+    SCM_DO_BUILD_DURING_DEPLOYMENT          = true
+    "WEBSITE_RUN_FROM_PACKAGE"              = "1"
+    "MEMBER_ID"                             = var.member_id
+    "MEMBER_PIN"                            = var.member_pin
+    "ADMIN_PASSWORD"                        = var.admin_password
+    "MAILCHIMP_API_KEY"                     = var.mailchimp_api_key
+    "MAILCHIMP_SERVER"                      = var.mailchimp_server
+    "MAILCHIMP_AUDIENCE_ID"                 = var.mailchimp_audience_id
   }
 
   site_config {

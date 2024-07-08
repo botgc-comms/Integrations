@@ -1,20 +1,26 @@
 {
     "scriptFile": "__init__.py",
     "bindings": [
-      {
-        "authLevel": "Anonymous",
-        "type": "httpTrigger",
-        "direction": "in",
-        "name": "req",
-        "methods": [
-          "get",
-          "post"
-        ]
-      },
-      {
-        "type": "http",
-        "direction": "out",
-        "name": "$return"
-      }
+        {
+            "authLevel": "Anonymous",
+            "type": "httpTrigger",
+            "direction": "in",
+            "name": "req",
+            "methods": [
+                "get",
+                "post"
+            ]
+        },
+        {
+            "type": "http",
+            "direction": "out",
+            "name": "$return"
+        },
+        {
+            "type": "timerTrigger",
+            "direction": "in",
+            "name": "mytimer",
+            "schedule": "0 0 0 * * *"  // This runs at midnight every night
+        }
     ]
-  }
+}

@@ -311,7 +311,7 @@ def update_mailchimp_async(merge_fields_collection):
     return added_count, updated_count
 
 
-def main(req: HttpRequest) -> HttpResponse:
+def main(req: HttpRequest = None, mytimer: TimerRequest = None) -> HttpResponse:
     logging.info("Azure function 'mailchimp_sync' triggered.")
     if member_login() and obtain_admin_rights():
         soup = execute_report()

@@ -184,3 +184,6 @@ override.tf.json
 
 # Ignore lock files
 .terraform.lock.hcl
+
+local.settings.json
+

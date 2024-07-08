@@ -10,6 +10,7 @@ from azure.functions import HttpRequest, HttpResponse
 import time
 from azure.storage.blob import BlobServiceClient
 import json
+import re
 
 # Define headers outside the functions as they are used in multiple places
 headers = {
@@ -68,6 +69,7 @@ def member_login():
         logging.error("First login failed with status code: %s and response: %s", response.status_code, response.text)
         logging.info("Exiting member_login with failure")
         return False
+
     logging.info("Exiting member_login with success")
     return True
 
@@ -103,8 +105,6 @@ def extract_data(soup):
         # Check if the h3 was found and extract its contents
         if h3_element:
             comp_name = h3_element.get_text()
-            print_error('H3 Content:', h3_content)
-            logging.warning('H3 Content:', h3_content)
         else:
             print_error('H3 element not found within the div.')
             logging.warning('H3 element not found within the div.')
@@ -153,11 +153,11 @@ def extract_data(soup):
     logging.info("Exiting extract_data with %d rows", len(table_rows))
     return comp_name, table_rows
 
-def read_config(config_path):
+def read_config():
     # Environment variables for Azure Storage account details
-    connection_string = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
-    container_name = 'your-container-name'
-    blob_name = 'config.json'
+    connection_string = os.getenv('DATA_CONTAINER_CONNECTION_STRING')
+    container_name = 'data'
+    blob_name = 'competitions.json'
 
     # Initialize the BlobServiceClient
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
@@ -167,6 +167,17 @@ def read_config(config_path):
     # Download the configuration file
     config_data = blob_client.download_blob().readall()
     config = json.loads(config_data)
+
+    return config
+
+def read_config_local():
+    config_file_path = os.path.join(os.path.dirname(__file__), '..', 'common', 'data', 'competitions.json')
+
+    logging.info(f"Retrieving config from {config_file_path}")
+
+    # Load the configuration file
+    with open(config_file_path, 'r') as config_file:
+        config = json.load(config_file)
 
     return config
 
@@ -192,15 +203,23 @@ def process_competition_results(competition_name, data, config):
     # Sort data by points in descending order
     sorted_data = sorted(filtered_data, key=lambda x: x['points'], reverse=True)
     
-    # Get the top N winners
-    top_winners = sorted_data[:number_of_winners]
+    # Get the top N winners and update positions
+    top_winners = []
+    for new_position, entry in enumerate(sorted_data[:number_of_winners], start=1):
+        updated_entry = entry.copy()
+        updated_entry['original_position'] = updated_entry['position']
+        updated_entry['position'] = new_position
+        top_winners.append(updated_entry)
     
     return top_winners
 
 def execute(req: HttpRequest):
+
+    results = []
+
     # Extract the 'compid' parameter from the query string
     compid = req.params.get('compid')
-    config = read_config('/data/competitions.json')
+    config = read_config()
 
     if not compid:
         try:
@@ -218,7 +237,6 @@ def execute(req: HttpRequest):
         comp, data = extract_data(soup)
 
         logging.info(f"Competition Name: {comp}")
-        logging.info(data)
 
         if comp is not None and data is not None:
             results = process_competition_results(comp, data, config)
@@ -227,4 +245,6 @@ def execute(req: HttpRequest):
             tc.track_event("Function executed successfully")
             tc.flush()
 
-    return compid  # Return the compid or perform further processing
+    logging.info(results)
+
+    return results  

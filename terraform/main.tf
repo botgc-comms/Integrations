@@ -23,6 +23,12 @@ data "azurerm_storage_account" "sync_with_ig_sa" {
   resource_group_name = "rg-botgc-shared"
 }
 
+resource "azurerm_storage_container" "data" {
+  name                  = "data"
+  storage_account_name  = data.azurerm_storage_account.sync_with_ig_sa.name
+  container_access_type = "private"
+}
+
 resource "azurerm_service_plan" "sync_with_ig_asp" {
   name                = "asp-${var.project_name}-${var.environment}"
   location            = azurerm_resource_group.sync_with_ig_rg.location
@@ -42,7 +48,7 @@ resource "azurerm_linux_function_app" "sync_with_ig_fa" {
   app_settings = {
     "APPINSIGHTS_INSTRUMENTATIONKEY"        = azurerm_application_insights.app_insights.instrumentation_key
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.app_insights.connection_string
-    SCM_DO_BUILD_DURING_DEPLOYMENT          = true
+    "SCM_DO_BUILD_DURING_DEPLOYMENT"        = true
     "WEBSITE_RUN_FROM_PACKAGE"              = "1"
     "MEMBER_ID"                             = var.member_id
     "MEMBER_PIN"                            = var.member_pin
@@ -51,6 +57,7 @@ resource "azurerm_linux_function_app" "sync_with_ig_fa" {
     "MAILCHIMP_SERVER"                      = var.mailchimp_server
     "MAILCHIMP_AUDIENCE_ID"                 = var.mailchimp_audience_id
     "PYTHONPATH"                            = "/home/site/wwwroot/common"
+    "DATA_CONTAINER_CONNECTION_STRING"      = data.azurerm_storage_account.sync_with_ig_sa.primary_connection_string
   }
 
   site_config {

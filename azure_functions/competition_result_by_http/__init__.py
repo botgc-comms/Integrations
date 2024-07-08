@@ -1,8 +1,8 @@
-from common.mailchimp_sync import execute
+from common.get_competition_result import execute
 from azure.functions import HttpRequest, HttpResponse
 import logging
 
-def main(req: HttpRequest = None) -> HttpResponse:
+def main(req: HttpRequest) -> HttpResponse:
     added_count, updated_count = execute(req)
     response_message = (
         f"Azure function 'mailchimp_sync' completed. "

@@ -1,0 +1,16 @@
+{
+    "competitions": [
+      {
+        "regex": "^.*Norman\\sRees\\sCup.*",
+        "minHandicap": 12,
+        "maxHandicap": 22,
+        "numberOfWinners": 3
+      },
+      {
+        "regex": ".*another.*",
+        "minHandicap": 5,
+        "maxHandicap": 25,
+        "numberOfWinners": 2
+      }
+    ]
+  }

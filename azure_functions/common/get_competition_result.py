@@ -8,6 +8,8 @@ import logging
 from applicationinsights import TelemetryClient
 from azure.functions import HttpRequest, HttpResponse
 import time
+from azure.storage.blob import BlobServiceClient
+import json
 
 # Define headers outside the functions as they are used in multiple places
 headers = {
@@ -87,10 +89,29 @@ def execute_report(compid):
         return None
 
 def extract_data(soup):
+    comp_name = ""
+
     logging.info("Entering extract_data")
     if soup is None:
         logging.warning("Soup is None, returning empty data list")
         return []
+
+    global_div = soup.find('div', class_='global')
+    if global_div:
+        h3_element = global_div.find('h3')
+        
+        # Check if the h3 was found and extract its contents
+        if h3_element:
+            comp_name = h3_element.get_text()
+            print_error('H3 Content:', h3_content)
+            logging.warning('H3 Content:', h3_content)
+        else:
+            print_error('H3 element not found within the div.')
+            logging.warning('H3 element not found within the div.')
+    else:
+        print_error('Div with class "global" not found.')
+        logging.warning('Div with class "global" not found.')
+
     table = soup.find('table')
     if table is None:
         print_error("No table found in the provided HTML.")
@@ -116,26 +137,70 @@ def extract_data(soup):
         name = cols[1].find('a').get_text(strip=True)
         handicap = int(name_and_handicap.split('(')[-1].rstrip(')'))
 
-        # Extract points and countback results
         points = int(cols[2].find('a').get_text(strip=True))
         countback_results = cols[2].find('a')['title'].split(':')[-1].strip()
 
-        results.append({
+        result = {
             'position': position,
             'name': name,
             'handicap': handicap,
             'points': points,
             'countback_results': countback_results
-        })
-    
-    logging.info("Exiting extract_data with %d rows", len(table_rows) - 1)
-    return table_rows[1:]
+        }
 
-from azure.functions import HttpRequest
+        table_rows.append(result)
+    
+    logging.info("Exiting extract_data with %d rows", len(table_rows))
+    return comp_name, table_rows
+
+def read_config(config_path):
+    # Environment variables for Azure Storage account details
+    connection_string = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
+    container_name = 'your-container-name'
+    blob_name = 'config.json'
+
+    # Initialize the BlobServiceClient
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    container_client = blob_service_client.get_container_client(container_name)
+    blob_client = container_client.get_blob_client(blob_name)
+
+    # Download the configuration file
+    config_data = blob_client.download_blob().readall()
+    config = json.loads(config_data)
+
+    return config
+
+# Filter and sort competition results
+def process_competition_results(competition_name, data, config):
+    # Find the matching competition config
+    competition_config = None
+    for comp in config['competitions']:
+        if re.match(comp['regex'], competition_name):
+            competition_config = comp
+            break
+    
+    if not competition_config:
+        raise ValueError(f"No matching config found for competition: {competition_name}")
+    
+    min_handicap = competition_config['minHandicap']
+    max_handicap = competition_config['maxHandicap']
+    number_of_winners = competition_config['numberOfWinners']
+    
+    # Filter data based on handicap limits
+    filtered_data = [entry for entry in data if min_handicap <= entry['handicap'] <= max_handicap]
+    
+    # Sort data by points in descending order
+    sorted_data = sorted(filtered_data, key=lambda x: x['points'], reverse=True)
+    
+    # Get the top N winners
+    top_winners = sorted_data[:number_of_winners]
+    
+    return top_winners
 
 def execute(req: HttpRequest):
     # Extract the 'compid' parameter from the query string
     compid = req.params.get('compid')
+    config = read_config('/data/competitions.json')
 
     if not compid:
         try:
@@ -150,7 +215,13 @@ def execute(req: HttpRequest):
 
     if member_login():
         soup = execute_report(compid)
-        data = extract_data(soup)
+        comp, data = extract_data(soup)
+
+        logging.info(f"Competition Name: {comp}")
+        logging.info(data)
+
+        if comp is not None and data is not None:
+            results = process_competition_results(comp, data, config)
 
         if tc:
             tc.track_event("Function executed successfully")

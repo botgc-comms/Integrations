@@ -312,7 +312,6 @@ def update_mailchimp_async(merge_fields_collection):
 
 
 def execute(req):
-    logging.info("Azure function 'mailchimp_sync' triggered.")
     added_count = 0
     updated_count = 0
     if member_login() and obtain_admin_rights():
@@ -323,7 +322,5 @@ def execute(req):
         if tc:
             tc.track_event("Function executed successfully")
             tc.flush()
-
-    logging.info(f"Azure function 'mailchimp_sync' completed. Added: {added_count}, Updated: {updated_count}")
 
     return added_count, updated_count

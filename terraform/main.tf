@@ -50,6 +50,7 @@ resource "azurerm_linux_function_app" "sync_with_ig_fa" {
     "MAILCHIMP_API_KEY"                     = var.mailchimp_api_key
     "MAILCHIMP_SERVER"                      = var.mailchimp_server
     "MAILCHIMP_AUDIENCE_ID"                 = var.mailchimp_audience_id
+    "PYTHONPATH"                            = "/home/site/wwwroot/common"
   }
 
   site_config {

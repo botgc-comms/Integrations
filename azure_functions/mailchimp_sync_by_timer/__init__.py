@@ -1,12 +1,11 @@
 from common.mailchimp_sync import execute
-from azure.functions import HttpRequest, HttpResponse
+from azure.functions import TimerRequest
 import logging
 
-def main(req: HttpRequest = None) -> HttpResponse:
-    added_count, updated_count = execute(req)
+def main(timer: TimerRequest) -> None:
+    added_count, updated_count = execute()
     response_message = (
         f"Azure function 'mailchimp_sync' completed. "
         f"Added: {added_count}, Updated: {updated_count}"
     )
     logging.info(response_message)
-    return HttpResponse(response_message, status_code=200)

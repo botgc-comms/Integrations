@@ -311,7 +311,7 @@ def update_mailchimp_async(merge_fields_collection):
     return added_count, updated_count
 
 
-def execute(req):
+def execute(req=None):
     added_count = 0
     updated_count = 0
     if member_login() and obtain_admin_rights():

@@ -146,6 +146,7 @@ def extract_data(soup):
         
         score_string = cols[2].find('a').get_text(strip=True)
         
+        
         countback_results = cols[2].find('a')['title'].split(':')[-1].strip()
 
         result = {

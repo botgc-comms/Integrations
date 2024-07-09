@@ -135,18 +135,28 @@ def extract_data(soup):
         # Extract name and handicap
         name_and_handicap = cols[1].get_text(strip=True)
         name = cols[1].find('a').get_text(strip=True)
-        handicap = int(name_and_handicap.split('(')[-1].rstrip(')'))
 
-        points = int(cols[2].find('a').get_text(strip=True))
+        handicap = 999
+        handicap_string = re.findall(r'\(([^)]+)\)', name_and_handicap)[0]
+        if '+' in handicap_string:
+            handicap_string = handicap_string.replace('+', '')
+            handicap = -int(handicap_string)
+        else:
+            handicap = int(handicap_string)
+        
+        score_string = cols[2].find('a').get_text(strip=True)
+        
         countback_results = cols[2].find('a')['title'].split(':')[-1].strip()
 
         result = {
             'position': position,
             'name': name,
             'handicap': handicap,
-            'points': points,
+            'score': score_string,
             'countback_results': countback_results
         }
+
+        logging.info(result)
 
         table_rows.append(result)
     
@@ -196,12 +206,13 @@ def process_competition_results(competition_name, data, config):
     min_handicap = competition_config['minHandicap']
     max_handicap = competition_config['maxHandicap']
     number_of_winners = competition_config['numberOfWinners']
+    scoreType = competition_config['scoreType']
     
     # Filter data based on handicap limits
-    filtered_data = [entry for entry in data if min_handicap <= entry['handicap'] <= max_handicap]
-    
+    filtered_data = [entry for entry in data if entry['score'] != 'NR' and min_handicap <= entry['handicap'] <= max_handicap]
+
     # Sort data by points in descending order
-    sorted_data = sorted(filtered_data, key=lambda x: x['points'], reverse=True)
+    sorted_data = sorted(filtered_data, key=lambda x: x['position'])
     
     # Get the top N winners and update positions
     top_winners = []

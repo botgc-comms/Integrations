@@ -4,13 +4,15 @@
         "regex": "^.*Norman\\sRees\\sCup.*",
         "minHandicap": 12,
         "maxHandicap": 22,
-        "numberOfWinners": 3
+        "numberOfWinners": 3,
+        "scoreType": "STABLEFORD"
       },
       {
-        "regex": ".*another.*",
-        "minHandicap": 5,
-        "maxHandicap": 25,
-        "numberOfWinners": 2
+        "regex": "^.*?Harold\\sCoaley\\sCup.*",
+        "minHandicap": 16,
+        "maxHandicap": 999,
+        "numberOfWinners": 3, 
+        "scoreType": "MEDAL"
       }
     ]
   }

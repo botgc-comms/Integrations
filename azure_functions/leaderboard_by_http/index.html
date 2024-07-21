@@ -110,6 +110,31 @@
             .table-container {
                 position: relative;
             }
+
+            .black-box {
+                background-color: black;
+                color: white;
+                display: block;
+                width: calc(100% - 1px); /* 3px smaller than the cell */
+                margin: 0 auto; /* Center the box within the cell */
+                padding: 1px 0;
+                text-align: center;
+                border-radius: 3px;
+                box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            }
+
+            .red-box {
+                background-color: red;
+                color: white;
+                display: block;
+                width: calc(100% - 1px); /* 3px smaller than the cell */
+                margin: 0 auto; /* Center the box within the cell */
+                padding: 1px 0;
+                text-align: center;
+                border-radius: 3px;
+                box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            }
+
             .orange-bg {
                 position: absolute;
                 top: 0px;
@@ -136,6 +161,11 @@
             th {
                 color: black;
                 text-align: center;
+            }
+            .par-cell, .score-cell, .thru-cell {
+                text-align:center;
+                padding-top: 0px;
+                padding-bottom: 0px;
             }
             .rank-cell {
                 color: white;
@@ -234,8 +264,8 @@
                                     <th></th>
                                     <th></th>
                                     <th></th>
-                                    <th>Par</th>
                                     <th>Score</th>
+                                    <th>Par</th>
                                     <th>Thru</th>
                                 </tr>
                             </thead>
@@ -283,13 +313,15 @@
                             const divisionColors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A5"];
                             const division = player.division || 0;
     
+                            const parClass = player.par < 0 ? 'red-box' : 'black-box';
+
                             row.innerHTML = `
                                 <td class="rank-cell">${index === 0 || player.score !== previousScore ? currentRank - rankGap : ''}</td>
                                 <td class="name-cell">${firstName} <strong>${surname}</strong></td>
                                 <td class="handicap-cell"><span class="badge">${player.handicap}</span></td>
-                                <td>${player.par}</td>
-                                <td>${player.score}</td>
-                                <td>${player.thr}</td>
+                                <td class="score-cell">${player.score}</td>
+                                <td class="par-cell"><div class="${parClass}">${player.par}</div></td>
+                                <td class="thru-cell">${player.thr}</td>
                             `
                             leaderboardBody.appendChild(row)
                             

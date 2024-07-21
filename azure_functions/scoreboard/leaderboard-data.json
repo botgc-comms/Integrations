@@ -1,0 +1,82 @@
+[
+    {
+        "name": "Shane Lowry",
+        "par": "+1",
+        "score": "72",
+        "thr": "27",
+        "division": 3,
+        "handicap": 23
+    },
+    {
+        "name": "Tommy Fleetwood",
+        "par": "+3",
+        "score": "74",
+        "thr": "27",
+        "division": 1,
+        "handicap": 6
+    },
+    {
+        "name": "Tony Finau",
+        "par": "Par",
+        "score": "71",
+        "thr": "18",
+        "division": 0,
+        "handicap": 23
+    },
+    {
+        "name": "Lee Westwood",
+        "par": "+2",
+        "score": "73",
+        "thr": "18",
+        "division": 1,
+        "handicap": 11
+    },
+    {
+        "name": "Brooks Koepka",
+        "par": "+3",
+        "score": "74",
+        "thr": "18",
+        "division": 0,
+        "handicap": 13
+    },
+    {
+        "name": "Robert MacIntyre",
+        "par": "-3",
+        "score": "68",
+        "thr": "18",
+        "division": 2,
+        "handicap": 8
+    },
+    {
+        "name": "Tyrrell Hatton",
+        "par": "-2",
+        "score": "69",
+        "thr": "18",
+        "division": 2,
+        "handicap": 13
+    },
+    {
+        "name": "Danny Willett",
+        "par": "+2",
+        "score": "73",
+        "thr": "10",
+        "division": 1,
+        "handicap": 13
+    },
+    {
+        "name": "Rickie Fowler",
+        "par": "+3",
+        "score": "74",
+        "thr": "10",
+        "division": 1,
+        "handicap": 13
+    },
+    {
+        "name": "Patrick Reed",
+        "par": "Par",
+        "score": "71",
+        "thr": "8",
+        "division": 1,
+        "handicap": 15
+    }
+]

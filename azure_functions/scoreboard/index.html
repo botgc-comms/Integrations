@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Golf Tournament Leaderboard</title>
+        <style>
+            @font-face {
+                font-family: 'Halifax Light';
+                src: url('fonts/Halifax-Light.otf') format('opentype');
+            }
+            body {
+                font-family: Arial, 'Halifax Light', Georgia, serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+                background: url('course-photo.jpg') no-repeat center center fixed;
+                background-size: cover;
+            }
+            .leaderboard {
+                display: grid;
+                grid-template-rows: 1fr 6fr 1fr;
+                width: 75%;
+                height: 75%;
+                max-width: 1440px;
+                max-height: 90%;
+                background: linear-gradient(to bottom right, rgba(36, 108, 155, 0.9), rgba(23, 43, 56, 0.9));
+                border-radius: 10px;
+                padding: 20px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                position: relative;
+                overflow: hidden;
+            }
+            .flash {
+                position: absolute;
+                top: -1000%;
+                left: -1000%;
+                width: 400%;
+                height: 400%;
+                background: linear-gradient(120deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 20%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 80%, rgba(255, 255, 255, 0) 100%);
+                transform: skewX(-30deg);
+                animation: flash 12s infinite;
+            }
+
+            @keyframes flash {
+                0% {
+                    top: -1000%;
+                    left: -1000%;
+                    opacity: 1;
+                }
+                10% {
+                    opacity: 1;
+                }
+                90% {
+                    opacity: 1;
+                }
+                100% {
+                    top: 1000%;
+                    left: 1000%;
+                    opacity: 1;
+                }
+            }
+            
+            .header {
+                grid-column: 1 / -1;
+                display: flex;
+                align-items: center;
+                padding: 10px;
+                font-size: 3em;
+                color: white;
+            }
+
+            .header .trophy-wrapper {
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .header img.trophy {
+                margin-right: 20px;
+                height: 120px; /* Adjust size as necessary */
+            }
+
+            .header .text {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .footer {
+                grid-column: 1 / -1;
+            }
+            .content {
+                display: grid;
+                grid-template-columns: .5fr 4fr .5fr;
+                grid-column: 1 / -1;
+                gap: 10px;
+                font-size: x-large;
+                letter-spacing: 1px;
+            }
+            .left, .right {
+                background: none;
+            }
+            .central {
+                position: relative;
+            }
+            .table-container {
+                position: relative;
+            }
+            .orange-bg {
+                position: absolute;
+                top: 0px;
+                right: 0;
+                bottom: -15px;
+                width: 40%;
+                background-color: rgba(245, 179, 0, 1);
+                z-index: 0;
+            }
+            table {
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0 4px;
+                position: relative;
+                z-index: 1;
+            }
+            th, td {
+                padding: 10px;
+                text-align: left;
+                transition: transform 0.5s ease;
+                background: transparent;
+                color: black;
+            }
+            th {
+                color: black;
+                text-align: center;
+            }
+            .rank-cell {
+                color: white;
+                padding-left: 30px; /* Increased padding for the first column */
+            }
+            .name-cell {
+                color: white;
+                text-transform: none;
+            }
+            .handicap-cell {
+                color: black;
+                text-align: center;
+            }
+            .handicap-cell .badge {
+                display: inline-block;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                line-height: 30px;
+                font-size: 15px;
+                color: black;
+                background: white;
+                text-align: center;
+            }
+            .par-cell, .score-cell, .thr-cell {
+                width: calc(33.33% - 20px); /* Equal width for the last three columns */
+                text-align: center;
+            }
+            tr {
+                background: rgba(255, 255, 255, 0.1);
+            }
+            tr.removing {
+                animation: slideOut 0.5s forwards;
+            }
+            @keyframes slideOut {
+                100% {
+                    transform: translateX(-100%);
+                    opacity: 0;
+                }
+            }
+            tr.adding {
+                animation: slideIn 0.5s backwards;
+            }
+            @keyframes slideIn {
+                0% {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                100% {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            tr.moving-up {
+                animation: moveUp 0.5s forwards;
+            }
+            @keyframes moveUp {
+                0% {
+                    transform: translateY(100%);
+                }
+                100% {
+                    transform: translateY(0);
+                }
+            }
+            .logo {
+                position: absolute;
+                bottom: 30px;
+                left: 30px;
+                opacity: 0.5;
+                max-width: 300px;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <div class="leaderboard">
+            <div class="flash"></div>
+            <img src="club-logo.png" alt="Logo" class="logo">
+            <div class="header">
+                <div class="trophy-wrapper">
+                    <img class="trophy" src="trophy.png" alt="Trophy">
+                </div>
+                <div class="text">
+                    <div>The BOTGC</div>
+                    <div>Championships</div>
+                </div>
+            </div>
+            <div class="content">
+                <div class="left"></div>
+                <div class="central">
+                    <div class="table-container">
+                        <div class="orange-bg"></div>
+                        <table id="leaderboard-table">
+                            <thead>
+                                <tr style="background: transparent;">
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th>Par</th>
+                                    <th>Score</th>
+                                    <th>Thru</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-body">
+                                <!-- Leaderboard rows will be inserted here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="right"></div>
+            </div>
+            <!-- <div class="footer"></div> -->
+        </div>
+        <script>
+            function updateLeaderboard() {
+                fetch('leaderboard-data.json')
+                    .then(response => response.json())
+                    .then(data => {
+                        const leaderboardBody = document.getElementById('leaderboard-body')
+                        leaderboardBody.innerHTML = '';
+    
+                        data.sort((a, b) => {
+                            const scoreA = parseInt(a.score.replace(/[^\d]/g, '')) || 0
+                            const scoreB = parseInt(b.score.replace(/[^\d]/g, '')) || 0
+                            return scoreA - scoreB
+                        });
+    
+                        let currentRank = 1;
+                        let rankGap = 1;
+                        let previousScore = data[0]?.score || null;
+    
+                        data.forEach((player, index) => {
+                            if (index === 0 || player.score !== previousScore) {
+                                currentRank += rankGap;
+                                rankGap = 1;
+                            } else {
+                                rankGap++;
+                            }
+    
+                            const row = document.createElement('tr')
+                            const nameParts = player.name.split(' ');
+                            const surname = nameParts.pop();
+                            const firstName = nameParts.join(' ');
+    
+                            const divisionColors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A5"];
+                            const division = player.division || 0;
+    
+                            row.innerHTML = `
+                                <td class="rank-cell">${index === 0 || player.score !== previousScore ? currentRank - rankGap : ''}</td>
+                                <td class="name-cell">${firstName} <strong>${surname}</strong></td>
+                                <td class="handicap-cell"><span class="badge">${player.handicap}</span></td>
+                                <td>${player.par}</td>
+                                <td>${player.score}</td>
+                                <td>${player.thr}</td>
+                            `
+                            leaderboardBody.appendChild(row)
+                            
+                            previousScore = player.score;
+                        })
+                    })
+                    .catch(error => console.error('Error fetching leaderboard data:', error))
+            }
+    
+            updateLeaderboard()
+            setInterval(updateLeaderboard, 10000)
+        </script>
+    </body>
+    
+    
+        
+</html>

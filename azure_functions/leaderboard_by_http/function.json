@@ -5,12 +5,12 @@
             "type": "httpTrigger",
             "direction": "in",
             "name": "req",
-            "methods": ["get"]
+            "route": "leaderboard_by_http/{*file}"
         },
         {
             "type": "http",
             "direction": "out",
-            "name": "res"
+            "name": "$return"
         }
     ]
 }

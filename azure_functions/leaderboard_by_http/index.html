@@ -17,7 +17,7 @@
                 justify-content: center;
                 height: 100vh;
                 margin: 0;
-                background: url('course-photo.jpg') no-repeat center center fixed;
+                background: url('%root%/assets/course-photo.jpg') no-repeat center center fixed;
                 background-size: cover;
             }
             .leaderboard {
@@ -213,10 +213,10 @@
     <body>
         <div class="leaderboard">
             <div class="flash"></div>
-            <img src="club-logo.png" alt="Logo" class="logo">
+            <img src="%root%/assets/club-logo.png" alt="Logo" class="logo">
             <div class="header">
                 <div class="trophy-wrapper">
-                    <img class="trophy" src="trophy.png" alt="Trophy">
+                    <img class="trophy" src="%root%/assets/trophy.png" alt="Trophy">
                 </div>
                 <div class="text">
                     <div>The BOTGC</div>
@@ -251,7 +251,7 @@
         </div>
         <script>
             function updateLeaderboard() {
-                fetch('leaderboard-data.json')
+                fetch('%root%/assets/leaderboard-data.json')
                     .then(response => response.json())
                     .then(data => {
                         const leaderboardBody = document.getElementById('leaderboard-body')

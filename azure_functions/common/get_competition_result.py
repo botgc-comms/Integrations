@@ -112,11 +112,17 @@ def extract_data(soup):
         print_error('Div with class "global" not found.')
         logging.warning('Div with class "global" not found.')
 
+    logging.info(f"Competition Name: {comp_name}")
+
     table = soup.find('table')
     if table is None:
         print_error("No table found in the provided HTML.")
         logging.warning("No table found in the provided HTML.")
         return []
+
+    thead_tr = table.find('thead').find('tr')
+    headings = [td.get_text() for td in thead_tr.find_all('td')]
+    live_leaderboard = "Thru" in headings
 
     table_rows = []
     
@@ -144,22 +150,43 @@ def extract_data(soup):
         else:
             handicap = int(handicap_string)
         
-        score_string = cols[2].find('a').get_text(strip=True)
-        
-        
-        countback_results = cols[2].find('a')['title'].split(':')[-1].strip()
+        logging.info(f"Position {position}, Name {name}, Handicap {handicap}")
 
-        result = {
-            'position': position,
-            'name': name,
-            'handicap': handicap,
-            'score': score_string,
-            'countback_results': countback_results
-        }
+        if live_leaderboard:
+            status_string = cols[2].get_text(strip=True)
+            score_string = cols[3].find('a').get_text(strip=True)
+            countback_results = cols[3].find('a')['title'].split(':')[-1].strip()
+            thru_string = cols[4].get_text(strip=True)
 
-        logging.info(result)
+            result = {
+                'position': position,
+                'name': name,
+                'handicap': handicap,
+                'status': status_string,
+                'score': score_string,
+                'countback_results': countback_results,
+                'thru': thru_string
+            }
 
-        table_rows.append(result)
+            logging.info(result)
+
+            table_rows.append(result)
+        else:
+            score_string = cols[2].find('a').get_text(strip=True)
+
+            countback_results = cols[2].find('a')['title'].split(':')[-1].strip()
+
+            result = {
+                'position': position,
+                'name': name,
+                'handicap': handicap,
+                'score': score_string,
+                'countback_results': countback_results
+            }
+
+            logging.info(result)
+
+            table_rows.append(result)
     
     logging.info("Exiting extract_data with %d rows", len(table_rows))
     return comp_name, table_rows
@@ -211,10 +238,10 @@ def process_competition_results(competition_name, data, config):
     
     # Filter data based on handicap limits
     filtered_data = [entry for entry in data if entry['score'] != 'NR' and min_handicap <= entry['handicap'] <= max_handicap]
-
+    
     # Sort data by points in descending order
     sorted_data = sorted(filtered_data, key=lambda x: x['position'])
-    
+
     # Get the top N winners and update positions
     top_winners = []
     for new_position, entry in enumerate(sorted_data[:number_of_winners], start=1):
@@ -222,7 +249,7 @@ def process_competition_results(competition_name, data, config):
         updated_entry['original_position'] = updated_entry['position']
         updated_entry['position'] = new_position
         top_winners.append(updated_entry)
-    
+
     return top_winners
 
 def execute(req: HttpRequest):
@@ -248,15 +275,14 @@ def execute(req: HttpRequest):
         soup = execute_report(compid)
         comp, data = extract_data(soup)
 
-        logging.info(f"Competition Name: {comp}")
-
         if comp is not None and data is not None:
             results = process_competition_results(comp, data, config)
+            logging.info(f"Competition Name: {comp} data: {data} results: {results}")
 
         if tc:
             tc.track_event("Function executed successfully")
             tc.flush()
-
+    
     logging.info(results)
 
-        urn results  
+    return results

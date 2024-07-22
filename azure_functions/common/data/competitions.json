@@ -13,6 +13,13 @@
         "maxHandicap": 999,
         "numberOfWinners": 3, 
         "scoreType": "MEDAL"
+      }, 
+      {
+        "regex": "^.*$",
+        "minHandicap": -999,
+        "maxHandicap": 999,
+        "numberOfWinners": 999, 
+        "scoreType": "MEDAL"
       }
     ]
   }

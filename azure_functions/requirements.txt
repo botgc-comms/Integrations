@@ -1,5 +1,6 @@
 azure-functions
 azure-storage-blob
+html5lib
 requests==2.25.1
 beautifulsoup4==4.9.3
 colorama==0.4.4

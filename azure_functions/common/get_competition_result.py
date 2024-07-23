@@ -1,5 +1,6 @@
 import requests
 from requests.auth import HTTPBasicAuth
+from .get_competition_startsheet import get_startsheet 
 from bs4 import BeautifulSoup
 import hashlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -83,14 +84,21 @@ def execute_report(compid):
         print_success("Successfully accessed the report.")
         logging.debug("Report content: %s", response.content)
         logging.info("Exiting execute_report with success")
-        return BeautifulSoup(response.content, 'html.parser')
+        return BeautifulSoup(response.content, 'html5lib') 
+        #'html.parser')
     else:
         print_error("Failed to access the report.")
         logging.error("Failed to access report with status code: %s and response: %s", response.status_code, response.text)
         logging.info("Exiting execute_report with failure")
         return None
 
-def extract_data(soup):
+def lookup_handicap(startsheet, name):
+    for person in startsheet:
+        if person['name'] == name:
+            return float(person['HI']), float(person['CH']), float(person['PH'])
+    return None, None, None  # Return None if the person is not found
+
+def extract_data(soup, startsheet):
     comp_name = ""
 
     logging.info("Entering extract_data")
@@ -123,6 +131,7 @@ def extract_data(soup):
     thead_tr = table.find('thead').find('tr')
     headings = [td.get_text() for td in thead_tr.find_all('td')]
     live_leaderboard = "Thru" in headings
+    on_course_scoring = "Latest" in headings
 
     table_rows = []
     
@@ -138,55 +147,92 @@ def extract_data(soup):
         else:
             continue
 
-        # Extract name and handicap
-        name_and_handicap = cols[1].get_text(strip=True)
-        name = cols[1].find('a').get_text(strip=True)
+        if on_course_scoring:
 
-        handicap = 999
-        handicap_string = re.findall(r'\(([^)]+)\)', name_and_handicap)[0]
-        if '+' in handicap_string:
-            handicap_string = handicap_string.replace('+', '')
-            handicap = -int(handicap_string)
-        else:
-            handicap = int(handicap_string)
-        
-        logging.info(f"Position {position}, Name {name}, Handicap {handicap}")
+            # Extract name and handicap
+            name_and_handicap = cols[2].get_text(strip=True)
+            name_tag = cols[2].find('a')  # Adjusted to check the correct column
+            name = name_tag.get_text(strip=True) if name_tag else name_and_handicap
 
-        if live_leaderboard:
-            status_string = cols[2].get_text(strip=True)
-            score_string = cols[3].find('a').get_text(strip=True)
-            countback_results = cols[3].find('a')['title'].split(':')[-1].strip()
+            name = re.sub(r'\d{2,4}[\+\-]\d{1,2}', '', name).strip()
+            name_and_handicap = re.sub(r'[^a-zA-Z\s\(\)\-]', '', name_and_handicap).strip()
+            
+            logging.info(f"name and handicap: {name_and_handicap} name_tag {name_tag}")
+
+            hi, ch, ph = lookup_handicap(startsheet, name)
+                            
+            latest = cols[3].find('a') or cols[3].find('span')
+            latest_string = latest.get_text(strip=True) if latest else cols[3].get_text(strip=True)
+
             thru_string = cols[4].get_text(strip=True)
+            
+            final_string = cols[5].get_text(strip=True)
+            total_string = cols[6].get_text(strip=True)
+            
+            score = cols[6].get_text(strip=True) if len(cols) > 3 else None
 
             result = {
                 'position': position,
                 'name': name,
-                'handicap': handicap,
-                'status': status_string,
-                'score': score_string,
-                'countback_results': countback_results,
-                'thru': thru_string
+                'hi': hi,
+                'ci': ch, 
+                'ph': ph,
+                'latest': latest_string,
+                'total': total_string,
+                'thru': thru_string,
+                'final': final_string,
+                'score': score
             }
 
             logging.info(result)
 
             table_rows.append(result)
+
         else:
-            score_string = cols[2].find('a').get_text(strip=True)
+            # Extract name and handicap
+            name_and_handicap = cols[1].get_text(strip=True)
+            name_tag = cols[1].find('a')
+            name = name_tag.get_text(strip=True) if name_tag else name_and_handicap
 
-            countback_results = cols[2].find('a')['title'].split(':')[-1].strip()
+            hi, ch, ph = lookup_handicap(startsheet, name)
 
-            result = {
-                'position': position,
-                'name': name,
-                'handicap': handicap,
-                'score': score_string,
-                'countback_results': countback_results
-            }
+            if live_leaderboard:
+                status_string = cols[2].get_text(strip=True)
+                score_string = cols[3].find('a').get_text(strip=True)
+                countback_results = cols[3].find('a')['title'].split(':')[-1].strip()
+                thru_string = cols[4].get_text(strip=True)
 
-            logging.info(result)
+                result = {
+                    'position': position,
+                    'name': name,
+                    'handicap': handicap,
+                    'status': status_string,
+                    'score': score_string,
+                    'countback_results': countback_results,
+                    'thru': thru_string
+                }
 
-            table_rows.append(result)
+                logging.info(result)
+
+                table_rows.append(result)
+            else:
+                score_string = cols[2].find('a').get_text(strip=True)
+
+                countback_results = cols[2].find('a')['title'].split(':')[-1].strip()
+
+                result = {
+                    'position': position,
+                    'name': name,
+                    'hi': hi,
+                    'ci': ch, 
+                    'ph': ph,
+                    'score': score_string,
+                    'countback_results': countback_results
+                }
+
+                logging.info(result)
+
+                table_rows.append(result)
     
     logging.info("Exiting extract_data with %d rows", len(table_rows))
     return comp_name, table_rows
@@ -233,11 +279,13 @@ def process_competition_results(competition_name, data, config):
     
     min_handicap = competition_config['minHandicap']
     max_handicap = competition_config['maxHandicap']
-    number_of_winners = competition_config['numberOfWinners']
+    number_of_winners = competition_config['numberOfResults']
     scoreType = competition_config['scoreType']
+
+    useHandicap = competition_config.get('useHandicap', 'ph')
     
     # Filter data based on handicap limits
-    filtered_data = [entry for entry in data if entry['score'] != 'NR' and min_handicap <= entry['handicap'] <= max_handicap]
+    filtered_data = [entry for entry in data if entry['score'] != 'NR' and min_handicap <= entry[useHandicap] <= max_handicap]
     
     # Sort data by points in descending order
     sorted_data = sorted(filtered_data, key=lambda x: x['position'])
@@ -273,7 +321,12 @@ def execute(req: HttpRequest):
 
     if member_login():
         soup = execute_report(compid)
-        comp, data = extract_data(soup)
+
+        startsheet = get_startsheet(compid)
+
+        logging.info(startsheet)
+
+        comp, data = extract_data(soup, startsheet)
 
         if comp is not None and data is not None:
             results = process_competition_results(comp, data, config)

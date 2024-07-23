@@ -63,7 +63,7 @@
                     opacity: 1;
                 }
             }
-            
+
             .header {
                 grid-column: 1 / -1;
                 display: flex;
@@ -111,38 +111,36 @@
                 position: relative;
             }
 
-            .black-box {
-                background-color: black;
-                color: white;
+            .black-box, .red-box {
                 display: block;
-                width: calc(100% - 1px); /* 3px smaller than the cell */
+                width: calc(100% - 6px); /* 3px smaller on each side */
                 margin: 0 auto; /* Center the box within the cell */
-                padding: 1px 0;
+                padding: 2px 0;
                 text-align: center;
                 border-radius: 3px;
                 box-sizing: border-box; /* Include padding and border in the element's total width and height */
             }
-
+            .black-box {
+                background-color: black;
+                color: white;
+            }
             .red-box {
                 background-color: red;
                 color: white;
-                display: block;
-                width: calc(100% - 1px); /* 3px smaller than the cell */
-                margin: 0 auto; /* Center the box within the cell */
-                padding: 1px 0;
-                text-align: center;
-                border-radius: 3px;
-                box-sizing: border-box; /* Include padding and border in the element's total width and height */
             }
 
             .orange-bg {
                 position: absolute;
-                top: 0px;
+                top: 0;
                 right: 0;
-                bottom: -15px;
+                bottom: 0;
                 width: 40%;
                 background-color: rgba(245, 179, 0, 1);
                 z-index: 0;
+            }
+            .table-container {
+                position: relative;
+                z-index: 1;
             }
             table {
                 width: 100%;
@@ -161,11 +159,6 @@
             th {
                 color: black;
                 text-align: center;
-            }
-            .par-cell, .score-cell, .thru-cell {
-                text-align:center;
-                padding-top: 0px;
-                padding-bottom: 0px;
             }
             .rank-cell {
                 color: white;
@@ -190,10 +183,13 @@
                 background: white;
                 text-align: center;
             }
-            .par-cell, .score-cell, .thr-cell {
-                width: calc(33.33% - 20px); /* Equal width for the last three columns */
+            .par-cell, .score-cell, .thru-cell {
                 text-align: center;
+                width: calc(40% / 3); /* Adjust width to fit within the orange background */
+                padding-top: 0px;
+                padding-bottom: 0px;
             }
+
             tr {
                 background: rgba(255, 255, 255, 0.1);
             }
@@ -237,6 +233,7 @@
                 opacity: 0.5;
                 max-width: 300px;
             }
+
         </style>
     </head>
     
@@ -261,12 +258,12 @@
                         <table id="leaderboard-table">
                             <thead>
                                 <tr style="background: transparent;">
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th>Score</th>
-                                    <th>Par</th>
-                                    <th>Thru</th>
+                                    <th style="width:calc(10%);"></th>
+                                    <th style="width:calc(40%);"></th>
+                                    <th style="width:calc(10%);"></th>
+                                    <th class="score-cell">Scores</th>
+                                    <th class="par-cell">Latest</th>
+                                    <th class="thru-cell">Thru</th>
                                 </tr>
                             </thead>
                             <tbody id="leaderboard-body">
@@ -281,22 +278,21 @@
         </div>
         <script>
             function updateLeaderboard() {
-                fetch('%root%/assets/leaderboard-data.json')
+                const leaderboardUrl = 'http://localhost:7071/api/competition_result_by_http?compid=7094'; // Replace with the actual URL
+
+                fetch(leaderboardUrl)
                     .then(response => response.json())
                     .then(data => {
-                        const leaderboardBody = document.getElementById('leaderboard-body')
+                        const leaderboardBody = document.getElementById('leaderboard-body');
                         leaderboardBody.innerHTML = '';
-    
-                        data.sort((a, b) => {
-                            const scoreA = parseInt(a.score.replace(/[^\d]/g, '')) || 0
-                            const scoreB = parseInt(b.score.replace(/[^\d]/g, '')) || 0
-                            return scoreA - scoreB
-                        });
-    
+
+                        // Sort data based on the position attribute
+                        data.sort((a, b) => a.position - b.position);
+
                         let currentRank = 1;
                         let rankGap = 1;
                         let previousScore = data[0]?.score || null;
-    
+
                         data.forEach((player, index) => {
                             if (index === 0 || player.score !== previousScore) {
                                 currentRank += rankGap;
@@ -304,35 +300,33 @@
                             } else {
                                 rankGap++;
                             }
-    
-                            const row = document.createElement('tr')
+
+                            const row = document.createElement('tr');
                             const nameParts = player.name.split(' ');
                             const surname = nameParts.pop();
                             const firstName = nameParts.join(' ');
-    
-                            const divisionColors = ["#FF5733", "#33FF57", "#3357FF", "#FF33A5"];
-                            const division = player.division || 0;
-    
-                            const parClass = player.par < 0 ? 'red-box' : 'black-box';
+
+                            const parClass = player.total < 0 ? 'red-box' : 'black-box';
 
                             row.innerHTML = `
                                 <td class="rank-cell">${index === 0 || player.score !== previousScore ? currentRank - rankGap : ''}</td>
                                 <td class="name-cell">${firstName} <strong>${surname}</strong></td>
-                                <td class="handicap-cell"><span class="badge">${player.handicap}</span></td>
-                                <td class="score-cell">${player.score}</td>
-                                <td class="par-cell"><div class="${parClass}">${player.par}</div></td>
-                                <td class="thru-cell">${player.thr}</td>
-                            `
-                            leaderboardBody.appendChild(row)
-                            
+                                <td class="handicap-cell"><span class="badge">${player.ph}</span></td>
+                                <td class="score-cell">${player.final}</td>
+                                <td class="par-cell"><div class="${parClass}">${player.total}</div></td>
+                                <td class="thru-cell">${player.thru}</td>
+                            `;
+                            leaderboardBody.appendChild(row);
+
                             previousScore = player.score;
-                        })
+                        });
                     })
-                    .catch(error => console.error('Error fetching leaderboard data:', error))
+                    .catch(error => console.error('Error fetching leaderboard data:', error));
             }
-    
-            updateLeaderboard()
-            setInterval(updateLeaderboard, 10000)
+
+            updateLeaderboard();
+            setInterval(updateLeaderboard, 10000);
+
         </script>
     </body>
     

@@ -118,9 +118,6 @@ def extract_data(soup):
         })
 
     # Output the results
-    for player in players:
-        print(f"Name: {player['name']}, HI: {player['HI']}, CH: {player['CH']}, PH: {player['PH']}")
-   
     logging.info("Exiting extract_data with %d rows", len(players))
     return players
 

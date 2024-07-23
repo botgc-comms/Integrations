@@ -240,10 +240,10 @@ def extract_data(soup, startsheet):
                     'ci': ch, 
                     'ph': ph,
                     'latest': None,
-                    'total': parse_score(score_string) - 71, 
+                    'total': parse_score(score_string), 
                     'thru': 18,
                     'final': parse_score(score_string),
-                    'score': parse_score(score_string) - 71,
+                    'score': parse_score(score_string),
                     'countback_results': countback_results
                 }
 
@@ -304,8 +304,22 @@ def process_competition_results(competition_name, data, config):
     # Filter data based on handicap limits
     filtered_data = [entry for entry in data if entry['score'] != 'NR' and min_handicap <= entry[useHandicap] <= max_handicap]
     
-    # Sort data by points in descending order
-    sorted_data = sorted(filtered_data, key=lambda x: x['position'])
+    # Determine sorting order based on scoreType
+    if scoreType.lower() == 'stroke':
+        sorted_data = sorted(filtered_data, key=lambda x: x['score'])
+    elif scoreType.lower() == 'points':
+        sorted_data = sorted(filtered_data, key=lambda x: x['score'], reverse=True)
+
+        # Find the worst score in the field
+        worst_score = max(entry['score'] for entry in sorted_data[:number_of_winners])
+        logging.info(f"WORST SCORE: {worst_score}")
+
+        # Calculate total as the difference between each player's score and the worst score
+        for entry in sorted_data:
+            entry['total'] = (entry['score'] - worst_score)
+            # entry['total'] = (entry['total'] - worst_score)
+    else:
+        raise ValueError(f"Unknown scoreType: {scoreType}")
 
     # Get the top N winners and update positions
     top_winners = []

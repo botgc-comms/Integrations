@@ -8,7 +8,7 @@
         "maxHandicap": 22,
         "useHandicap": "ph",
         "numberOfResults": 3,
-        "scoreType": "STABLEFORD"
+        "scoreType": "stroke"
       },
       {
         "regex": "^.*?Harold\\sCoaley\\sCup.*",
@@ -18,7 +18,7 @@
         "maxHandicap": 999,
         "useHandicap": "ph",
         "numberOfResults": 3, 
-        "scoreType": "MEDAL"
+        "scoreType": "stroke"
       }, 
       {
         "regex": "^TEST.*$",
@@ -28,7 +28,16 @@
         "maxHandicap": 999,
         "useHandicap": "ph",
         "numberOfResults": 10, 
-        "scoreType": "MEDAL"
+        "scoreType": "stroke"
+      }, 
+      {
+        "regex": "^Stableford.*$",
+        "minHandicap": -999,
+        "maxHandicap": 999,
+        "grossOrNet": "net",
+        "useHandicap": "ph",
+        "numberOfResults": 10, 
+        "scoreType": "points"
       }, 
       {
         "regex": "^.*$",
@@ -37,7 +46,7 @@
         "grossOrNet": "net",
         "useHandicap": "ph",
         "numberOfResults": 10, 
-        "scoreType": "MEDAL"
+        "scoreType": "stroke"
       }
     ]
   }

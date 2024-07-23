@@ -42,18 +42,29 @@ function handleNullValues(value) {
 
 function updateCombinedLeaderboard() {
     const compIds = new URLSearchParams(window.location.search).get('compid');
+    const scoreType = new URLSearchParams(window.location.search).get('scoreType') || "stroke";
+
     fetchLeaderboard(compIds)
         .then(data => {
             const leaderboardBody = document.getElementById('leaderboard-body');
             const existingRows = Array.from(leaderboardBody.children);
 
             // Sort data based on the total score, then by the total holes completed
-            data.sort((a, b) => {
-                if (a.total === b.total) {
-                    return b.thru - a.thru;
-                }
-                return a.total - b.total;
-            });
+            if (scoreType === 'stroke') {
+                data.sort((a, b) => {
+                    if (a.total === b.total) {
+                        return b.thru - a.thru;
+                    }
+                    return a.total - b.total; // Ascending for stroke play
+                });
+            } else if (scoreType === 'points') {
+                data.sort((a, b) => {
+                    if (a.total === b.total) {
+                        return b.thru - a.thru;
+                    }
+                    return b.total - a.total; // Descending for stableford
+                });
+            }
 
             let currentRank = 1;
             let rankGap = 1;
@@ -71,9 +82,10 @@ function updateCombinedLeaderboard() {
                 const nameParts = player.name.split(' ');
                 const surname = nameParts.pop();
                 const firstName = nameParts.join(' ');
+                const zeroDesc = (scoreType === "stroke") ? "Level" : "Highest"
 
                 const parClass = player.total < 0 ? 'red-box' : 'black-box';
-                const latestScoreDisplay = player.total === 0 ? 'Level' : handleNullValues(player.total);
+                const latestScoreDisplay = player.total === 0 ? zeroDesc : handleNullValues(player.total);
 
                 row.innerHTML = `
                     <td class="rank-cell">${index === 0 || player.total !== previousScore ? currentRank - rankGap : ''}</td>

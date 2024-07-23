@@ -98,6 +98,15 @@ def lookup_handicap(startsheet, name):
             return float(person['HI']), float(person['CH']), float(person['PH'])
     return None, None, None  # Return None if the person is not found
 
+def parse_score(value):
+    value = value.strip()
+    if value == "":
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return 0
+
 def extract_data(soup, startsheet):
     comp_name = ""
 
@@ -177,11 +186,11 @@ def extract_data(soup, startsheet):
                 'hi': hi,
                 'ci': ch, 
                 'ph': ph,
-                'latest': latest_string,
-                'total': total_string,
-                'thru': thru_string,
-                'final': final_string,
-                'score': score
+                'latest': parse_score(latest_string),
+                'total': parse_score(total_string),
+                'thru': int(thru_string),
+                'final': parse_score(final_string),
+                'score': parse_score(score)
             }
 
             logging.info(result)
@@ -205,11 +214,13 @@ def extract_data(soup, startsheet):
                 result = {
                     'position': position,
                     'name': name,
-                    'handicap': handicap,
-                    'status': status_string,
-                    'score': score_string,
+                    'hi': hi,
+                    'ci': ch, 
+                    'ph': ph,
+                    'status': parse_score(status_string),
+                    'score': parse_score(score_string),
                     'countback_results': countback_results,
-                    'thru': thru_string
+                    'thru': int(thru_string)
                 }
 
                 logging.info(result)
@@ -226,7 +237,7 @@ def extract_data(soup, startsheet):
                     'hi': hi,
                     'ci': ch, 
                     'ph': ph,
-                    'score': score_string,
+                    'score': parse_score(score_string),
                     'countback_results': countback_results
                 }
 

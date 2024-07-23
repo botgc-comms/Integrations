@@ -277,24 +277,74 @@
             <!-- <div class="footer"></div> -->
         </div>
         <script>
-            function updateLeaderboard() {
-                const leaderboardUrl = 'http://localhost:7071/api/competition_result_by_http?compid=7094'; // Replace with the actual URL
+           
+            function combineResults(data1, data2) {
+                const combined = data1.map(player1 => {
+                    const player2 = data2.find(p => p.name === player1.name);
+                    const combinedPlayer = { ...player1 };
 
-                fetch(leaderboardUrl)
-                    .then(response => response.json())
+                    if (player2) {
+                        if (player1.thru >= 18 && player2.thru > 0) {
+                            combinedPlayer.thru = 18 + player2.thru;
+                            combinedPlayer.total = player1.total + player2.total;
+                            combinedPlayer.final = `${handleNullValues(player1.final)}/${handleNullValues(player2.final)}`.replace(/\/$/, '');
+                        } else {
+                            combinedPlayer.total = player1.total;
+                            combinedPlayer.thru = player1.thru;
+                            combinedPlayer.final = handleNullValues(player1.final);
+                        }
+                    }
+
+                    return combinedPlayer;
+                });
+
+                return combined;
+            }
+
+            function fetchLeaderboard(compIds) {
+                const compIdArray = compIds.split(',');
+                
+                const baseUrl = window.location.origin;
+                if (compIdArray.length === 1) {
+                    return fetch(`${baseUrl}/api/competition_result_by_http?compid=${compIdArray[0]}`)
+                        .then(response => response.json());
+                } else {
+                    return Promise.all(compIdArray.map(compId =>
+                        fetch(`${baseUrl}/api/competition_result_by_http?compid=${compId}`)
+                            .then(response => response.json())
+                    )).then(results => combineResults(results[0], results[1]));
+                }
+            }
+
+            function handleNullValues(value) {
+                if (value === null || value === undefined) {
+                    return '';
+                }
+                return value;
+            }
+
+            function updateCombinedLeaderboard() {
+                const compIds = new URLSearchParams(window.location.search).get('compid');
+
+                fetchLeaderboard(compIds)
                     .then(data => {
                         const leaderboardBody = document.getElementById('leaderboard-body');
                         leaderboardBody.innerHTML = '';
 
-                        // Sort data based on the position attribute
-                        data.sort((a, b) => a.position - b.position);
+                        // Sort data by total score and then by holes completed
+                        data.sort((a, b) => {
+                            if (a.total !== b.total) {
+                                return a.total - b.total;
+                            }
+                            return b.thru - a.thru;
+                        });
 
                         let currentRank = 1;
                         let rankGap = 1;
-                        let previousScore = data[0]?.score || null;
+                        let previousScore = data[0]?.total || null;
 
                         data.forEach((player, index) => {
-                            if (index === 0 || player.score !== previousScore) {
+                            if (index === 0 || player.total !== previousScore) {
                                 currentRank += rankGap;
                                 rankGap = 1;
                             } else {
@@ -309,23 +359,24 @@
                             const parClass = player.total < 0 ? 'red-box' : 'black-box';
 
                             row.innerHTML = `
-                                <td class="rank-cell">${index === 0 || player.score !== previousScore ? currentRank - rankGap : ''}</td>
+                                <td class="rank-cell">${index === 0 || player.total !== previousScore ? currentRank - rankGap : ''}</td>
                                 <td class="name-cell">${firstName} <strong>${surname}</strong></td>
                                 <td class="handicap-cell"><span class="badge">${player.ph}</span></td>
-                                <td class="score-cell">${player.final}</td>
+                                <td class="score-cell">${handleNullValues(player.final)}</td>
                                 <td class="par-cell"><div class="${parClass}">${player.total}</div></td>
                                 <td class="thru-cell">${player.thru}</td>
                             `;
                             leaderboardBody.appendChild(row);
 
-                            previousScore = player.score;
+                            previousScore = player.total;
                         });
                     })
                     .catch(error => console.error('Error fetching leaderboard data:', error));
             }
 
-            updateLeaderboard();
-            setInterval(updateLeaderboard, 10000);
+            updateCombinedLeaderboard();
+            setInterval(updateCombinedLeaderboard, 10000);
+
 
         </script>
     </body>

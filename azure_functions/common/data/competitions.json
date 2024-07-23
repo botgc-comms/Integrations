@@ -2,6 +2,8 @@
     "competitions": [
       {
         "regex": "^.*Norman\\sRees\\sCup.*",
+        "competitionTitle": "The Norman Rees<br/>Cup Competition",
+        "grossOrNet": "net",
         "minHandicap": 12,
         "maxHandicap": 22,
         "useHandicap": "ph",
@@ -10,6 +12,8 @@
       },
       {
         "regex": "^.*?Harold\\sCoaley\\sCup.*",
+        "competitionTitle": "The Harold Coaley<br/>Cup Competition",
+        "grossOrNet": "net",
         "minHandicap": 16,
         "maxHandicap": 999,
         "useHandicap": "ph",
@@ -17,9 +21,20 @@
         "scoreType": "MEDAL"
       }, 
       {
+        "regex": "^TEST.*$",
+        "competitionTitle": "Leaderboard<br/>Test",
+        "grossOrNet": "gross",
+        "minHandicap": -999,
+        "maxHandicap": 999,
+        "useHandicap": "ph",
+        "numberOfResults": 10, 
+        "scoreType": "MEDAL"
+      }, 
+      {
         "regex": "^.*$",
         "minHandicap": -999,
         "maxHandicap": 999,
+        "grossOrNet": "net",
         "useHandicap": "ph",
         "numberOfResults": 10, 
         "scoreType": "MEDAL"

@@ -217,8 +217,10 @@ def extract_data(soup, startsheet):
                     'hi': hi,
                     'ci': ch, 
                     'ph': ph,
-                    'status': parse_score(status_string),
-                    'score': parse_score(score_string),
+                    'latest': None,
+                    'total': parse_score(status_string),
+                    'final': parse_score(score_string),
+                    'score': parse_score(status_string),
                     'countback_results': countback_results,
                     'thru': int(thru_string)
                 }
@@ -237,7 +239,11 @@ def extract_data(soup, startsheet):
                     'hi': hi,
                     'ci': ch, 
                     'ph': ph,
-                    'score': parse_score(score_string),
+                    'latest': None,
+                    'total': parse_score(score_string) - 71, 
+                    'thru': 18,
+                    'final': parse_score(score_string),
+                    'score': parse_score(score_string) - 71,
                     'countback_results': countback_results
                 }
 

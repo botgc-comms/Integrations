@@ -1,0 +1,247 @@
+/* styles.css */
+
+@font-face {
+    font-family: 'Halifax Light';
+    src: url('fonts/Halifax-Light.otf') format('opentype');
+}
+
+body {
+    font-family: Arial, 'Halifax Light', Georgia, serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    background: url('assets/course-photo.jpg') no-repeat center center fixed;
+    background-size: cover;
+}
+
+.leaderboard {
+    display: grid;
+    grid-template-rows: 1fr 6fr 1fr;
+    width: 75%;
+    height: 75%;
+    max-width: 1440px;
+    max-height: 90%;
+    background: linear-gradient(to bottom right, rgba(36, 108, 155, 0.9), rgba(23, 43, 56, 0.9));
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.flash {
+    position: absolute;
+    top: -1000%;
+    left: -1000%;
+    width: 400%;
+    height: 400%;
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0) 20%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 80%, rgba(255, 255, 255, 0) 100%);
+    transform: skewX(-30deg);
+    animation: flash 12s infinite;
+}
+
+@keyframes flash {
+    0% {
+        top: -1000%;
+        left: -1000%;
+        opacity: 1;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        top: 1000%;
+        left: 1000%;
+        opacity: 1;
+    }
+}
+
+.header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    font-size: 3em;
+    color: white;
+}
+
+.header .trophy-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header img.trophy {
+    margin-right: 20px;
+    height: 120px; /* Adjust size as necessary */
+}
+
+.header .text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.footer {
+    grid-column: 1 / -1;
+}
+
+.content {
+    display: grid;
+    grid-template-columns: .5fr 4fr .5fr;
+    grid-column: 1 / -1;
+    gap: 10px;
+    font-size: x-large;
+    letter-spacing: 1px;
+}
+
+.left, .right {
+    background: none;
+}
+
+.central {
+    position: relative;
+}
+
+.table-container {
+    position: relative;
+}
+
+.black-box, .red-box {
+    display: block;
+    width: calc(100% - 6px); /* 3px smaller on each side */
+    margin: 0 auto; /* Center the box within the cell */
+    padding: 2px 0;
+    text-align: center;
+    border-radius: 3px;
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+.black-box {
+    background-color: black;
+    color: white;
+}
+
+.red-box {
+    background-color: red;
+    color: white;
+}
+
+.orange-bg {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 40%;
+    background-color: rgba(245, 179, 0, 1);
+    z-index: 0;
+}
+
+.table-container {
+    position: relative;
+    z-index: 1;
+}
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 4px;
+    position: relative;
+    z-index: 1;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+    transition: transform 0.5s ease;
+    background: transparent;
+    color: black;
+}
+
+th {
+    color: black;
+    text-align: center;
+}
+
+.rank-cell {
+    color: white;
+    padding-left: 30px; /* Increased padding for the first column */
+}
+
+.name-cell {
+    color: white;
+    text-transform: none;
+}
+
+.handicap-cell {
+    color: black;
+    text-align: center;
+}
+
+.handicap-cell .badge {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    line-height: 30px;
+    font-size: 15px;
+    color: black;
+    background: white;
+    text-align: center;
+}
+
+.par-cell, .score-cell, .thru-cell {
+    text-align: center;
+    width: calc(40% / 3); /* Adjust width to fit within the orange background */
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+tr {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.moving-up {
+    animation: move-up 0.5s forwards;
+}
+
+.moving-down {
+    animation: move-down 0.5s forwards;
+}
+
+@keyframes move-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+@keyframes move-down {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+}
+
+.logo {
+    position: absolute;
+    bottom: 30px;
+    left: 30px;
+    opacity: 0.5;
+    max-width: 300px;
+}
+
+#leaderboard-body tr {
+    transition: transform 0.5s ease-in-out;
+    height: 2.5rem; /* Adjust height as needed */
+    display: table-row;
+    width: 100%;
+}
+
+.handicap-cell, .score-cell, .par-cell, .thru-cell {
+    padding: 0.5rem;
+    text-align: center;
+}

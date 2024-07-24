@@ -102,6 +102,8 @@ def parse_score(value):
     value = value.strip()
     if value == "":
         return None
+    if value == "NR":
+        return None
     try:
         return int(value)
     except ValueError:
@@ -142,6 +144,9 @@ def extract_data(soup, startsheet):
     live_leaderboard = "Thru" in headings
     on_course_scoring = "Latest" in headings
 
+    is_multi_summary = "R1" in headings and "R2" in headings
+
+
     table_rows = []
     
     for tr in table.find_all('tr'):
@@ -156,17 +161,66 @@ def extract_data(soup, startsheet):
         else:
             continue
 
-        if on_course_scoring:
+        if is_multi_summary:
 
             # Extract name and handicap
             name_and_handicap = cols[2].get_text(strip=True)
+            name_and_handicap = re.sub(r'[^a-zA-Z\d\s\-\+\(\)\-]+', '', name_and_handicap).replace('\n', '').replace('\r', '').strip()
+            name_and_handicap = re.sub(r'[\s]+', ' ', name_and_handicap)
+
             name_tag = cols[2].find('a')  # Adjusted to check the correct column
             name = name_tag.get_text(strip=True) if name_tag else name_and_handicap
-
-            name = re.sub(r'\d{2,4}[\+\-]\d{1,2}', '', name).strip()
-            name_and_handicap = re.sub(r'[^a-zA-Z\s\(\)\-]', '', name_and_handicap).strip()
+            name = re.sub(r'\s+\([\-\+\d]+\)', '', name).strip()
             
-            logging.info(f"name and handicap: {name_and_handicap} name_tag {name_tag}")
+            hi, ch, ph = lookup_handicap(startsheet, name)
+
+            if ph is None:
+                match = re.search(r'\(([^)]+)\)', name_and_handicap)
+                if match:
+                    ph = int(match.group(1))
+            
+            r1 = cols[3].find('a') or cols[3].find('span')
+            r1_string = r1.get_text(strip=True) if r1 else cols[3].get_text(strip=True)
+            
+            r2 = cols[4].find('a') or cols[4].find('span')
+            r2_string = r2.get_text(strip=True) if r2 else cols[4].get_text(strip=True)
+
+            thru_string = "36"
+            
+            final_string = cols[6].get_text(strip=True)
+            total_string = cols[6].get_text(strip=True)
+            
+            score = cols[6].get_text(strip=True)
+
+            result = {
+                'position': position,
+                'name': name,
+                'hi': hi,
+                'ci': ch, 
+                'ph': ph,
+                'latest': parse_score(final_string),
+                'total': parse_score(total_string),
+                'thru': int(thru_string),
+                'final': parse_score(final_string),
+                'score': parse_score(score),
+                'r1': parse_score(r1_string),
+                'r2': parse_score(r2_string)
+            }
+
+            logging.info(result)
+
+            table_rows.append(result)
+
+        elif on_course_scoring:
+
+            # Extract name and handicap
+            name_and_handicap = cols[2].get_text(strip=True)
+            name_and_handicap = re.sub(r'[^a-zA-Z\d\s\-\+\(\)\-]+', '', name_and_handicap).replace('\n', '').replace('\r', '').strip()
+            name_and_handicap = re.sub(r'[\s]+', ' ', name_and_handicap)
+
+            name_tag = cols[2].find('a')  # Adjusted to check the correct column
+            name = name_tag.get_text(strip=True) if name_tag else name_and_handicap
+            name = re.sub(r'\s+\([\-\+\d]+\)', '', name).strip()
 
             hi, ch, ph = lookup_handicap(startsheet, name)
                             
@@ -200,10 +254,19 @@ def extract_data(soup, startsheet):
         else:
             # Extract name and handicap
             name_and_handicap = cols[1].get_text(strip=True)
-            name_tag = cols[1].find('a')
+            name_and_handicap = re.sub(r'[^a-zA-Z\d\s\-\+\(\)\-]+', '', name_and_handicap).replace('\n', '').replace('\r', '').strip()
+            name_and_handicap = re.sub(r'[\s]', ' ', name_and_handicap)
+
+            name_tag = cols[1].find('a')  # Adjusted to check the correct column
             name = name_tag.get_text(strip=True) if name_tag else name_and_handicap
+            name = re.sub(r'\s*\([\-\+\d]+\)', '', name).strip()
 
             hi, ch, ph = lookup_handicap(startsheet, name)
+
+            if ph is None:
+                match = re.search(r'\(([^)]+)\)', name_and_handicap)
+                if match:
+                    ph = int(match.group(1))
 
             if live_leaderboard:
                 status_string = cols[2].get_text(strip=True)
@@ -284,6 +347,9 @@ def read_config_local():
 
 # Filter and sort competition results
 def process_competition_results(competition_name, data, config):
+
+    logging.info(f"Processing competition results")
+
     # Find the matching competition config
     competition_config = None
     for comp in config['competitions']:
@@ -300,10 +366,12 @@ def process_competition_results(competition_name, data, config):
     scoreType = competition_config['scoreType']
 
     useHandicap = competition_config.get('useHandicap', 'ph')
-    
+            
     # Filter data based on handicap limits
     filtered_data = [entry for entry in data if entry['score'] != 'NR' and min_handicap <= entry[useHandicap] <= max_handicap]
-    
+
+    filtered_data = [entry for entry in filtered_data if entry['score'] is not None]
+
     # Determine sorting order based on scoreType
     if scoreType.lower() == 'stroke':
         sorted_data = sorted(filtered_data, key=lambda x: x['score'])

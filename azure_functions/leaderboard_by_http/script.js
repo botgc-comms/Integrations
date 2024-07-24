@@ -53,14 +53,24 @@ function updateCombinedLeaderboard() {
             if (scoreType === 'stroke') {
                 data.sort((a, b) => {
                     if (a.total === b.total) {
-                        return b.thru - a.thru;
+                        if (a.thru === b.thru) {
+                            return a.position - b.position
+                        }
+                        else {
+                            return b.thru - a.thru;
+                        }
                     }
                     return a.total - b.total; // Ascending for stroke play
                 });
             } else if (scoreType === 'points') {
                 data.sort((a, b) => {
                     if (a.total === b.total) {
-                        return b.thru - a.thru;
+                        if (a.thru === b.thru) {
+                            return a.position - b.position
+                        }
+                        else {
+                            return b.thru - a.thru;
+                        }
                     }
                     return b.total - a.total; // Descending for stableford
                 });
@@ -85,13 +95,22 @@ function updateCombinedLeaderboard() {
                 const zeroDesc = (scoreType === "stroke") ? "Level" : "Highest"
 
                 const parClass = player.total < 0 ? 'red-box' : 'black-box';
-                const latestScoreDisplay = player.total === 0 ? zeroDesc : handleNullValues(player.total);
+                let latestScoreDisplay = player.total === 0 ? zeroDesc : handleNullValues(player.total);
+                if (player.total > 0) latestScoreDisplay = "+" + latestScoreDisplay
+
+                const scoreCellContent = player.r1 !== undefined && player.r2 !== undefined
+                    ? `${player.r1}/${player.r2}`
+                    : handleNullValues(player.final);
+
+                const rank = player.r1 !== undefined && player.r2 !== undefined
+                    ? player.position
+                    : index === 0 || player.total !== previousScore ? currentRank - rankGap : ''
 
                 row.innerHTML = `
-                    <td class="rank-cell">${index === 0 || player.total !== previousScore ? currentRank - rankGap : ''}</td>
+                    <td class="rank-cell">${rank}</td>
                     <td class="name-cell">${firstName} <strong>${surname}</strong></td>
                     <td class="handicap-cell"><span class="badge">${player.ph}</span></td>
-                    <td class="score-cell">${handleNullValues(player.final)}</td>
+                    <td class="score-cell">${scoreCellContent}</td>
                     <td class="par-cell"><div class="${parClass}">${latestScoreDisplay}</div></td>
                     <td class="thru-cell">${player.thru}</td>
                 `;

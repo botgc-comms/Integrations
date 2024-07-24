@@ -143,8 +143,8 @@ def extract_data(soup, startsheet):
     headings = [td.get_text() for td in thead_tr.find_all('td')]
     live_leaderboard = "Thru" in headings
     on_course_scoring = "Latest" in headings
-
     is_multi_summary = "R1" in headings and "R2" in headings
+    has_status = "Status" in headings
 
 
     table_rows = []
@@ -269,28 +269,54 @@ def extract_data(soup, startsheet):
                     ph = int(match.group(1))
 
             if live_leaderboard:
-                status_string = cols[2].get_text(strip=True)
-                score_string = cols[3].find('a').get_text(strip=True)
-                countback_results = cols[3].find('a')['title'].split(':')[-1].strip()
-                thru_string = cols[4].get_text(strip=True)
 
-                result = {
-                    'position': position,
-                    'name': name,
-                    'hi': hi,
-                    'ci': ch, 
-                    'ph': ph,
-                    'latest': None,
-                    'total': parse_score(status_string),
-                    'final': parse_score(score_string),
-                    'score': parse_score(status_string),
-                    'countback_results': countback_results,
-                    'thru': int(thru_string)
-                }
+                if has_status:
 
-                logging.info(result)
+                    status_string = cols[2].get_text(strip=True)
+                    score_string = cols[3].find('a').get_text(strip=True)
+                    countback_results = cols[3].find('a')['title'].split(':')[-1].strip()
+                    thru_string = cols[4].get_text(strip=True)
 
-                table_rows.append(result)
+                    result = {
+                        'position': position,
+                        'name': name,
+                        'hi': hi,
+                        'ci': ch, 
+                        'ph': ph,
+                        'latest': None,
+                        'total': parse_score(status_string),
+                        'final': parse_score(score_string),
+                        'score': parse_score(status_string),
+                        'countback_results': countback_results,
+                        'thru': int(thru_string)
+                    }
+
+                    logging.info(result)
+
+                    table_rows.append(result)
+                else:
+                    logging.info("here")
+                    score_string = cols[2].find('a').get_text(strip=True)
+                    countback_results = cols[2].find('a')['title'].split(':')[-1].strip()
+                    thru_string = cols[3].get_text(strip=True)
+
+                    result = {
+                        'position': position,
+                        'name': name,
+                        'hi': hi,
+                        'ci': ch, 
+                        'ph': ph,
+                        'latest': None,
+                        'total': parse_score(score_string),
+                        'final': parse_score(score_string),
+                        'score': parse_score(score_string),
+                        'countback_results': countback_results,
+                        'thru': int(thru_string)
+                    }
+
+                    logging.info(result)
+
+                    table_rows.append(result)
             else:
                 score_string = cols[2].find('a').get_text(strip=True)
 

@@ -74,10 +74,12 @@ def member_login():
     logging.info("Exiting member_login with success")
     return True
 
-def execute_report(compid):
+def execute_report(compid, config):
     logging.info(f"Entering execute_report for comp id {compid}")
 
-    report_url = f"https://www.botgc.co.uk/competition.php?compid={compid}"
+    grossOrNet = 1 if config.get("grossOrNet", "gross") == "net" else 2
+
+    report_url = f"https://www.botgc.co.uk/competition.php?compid={compid}&sort={grossOrNet}"
     response = session.get(report_url)
 
     if response.ok:
@@ -445,7 +447,7 @@ def execute(req: HttpRequest):
     logging.info(f"Received compid: {compid}")
 
     if member_login():
-        soup = execute_report(compid)
+        soup = execute_report(compid, config)
 
         startsheet = get_startsheet(compid)
 

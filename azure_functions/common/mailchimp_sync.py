@@ -58,7 +58,7 @@ def member_login():
         "cachemid": "1",
         "Submit": "Login"
     }
-    response = session.post(login_url, headers=headers, data=data)
+    response = session.post(login_url, headers=headers, data=data, verify=False)
     if response.ok:
         print_success("First login successful!")
     else:

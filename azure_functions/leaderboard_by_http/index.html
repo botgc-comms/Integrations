@@ -3,46 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Golf Tournament Leaderboard</title>
-    <link rel="stylesheet" href="%root%/styles.css">
+    <title>Competition Redirect</title>
+    <script>
+        function getQueryParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        async function fetchCompetitionData() {
+            try {
+                const targetDate = getQueryParameter('date');
+                let apiUrl = `${window.location.origin}/api/competitions_list_by_http`
+                
+                if (targetDate) {
+                    apiUrl += `?date=${targetDate}`;
+                }
+
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                handleCompetitionData(data);
+            } catch (error) {
+                console.error('There has been a problem with your fetch operation:', error);
+            }
+        }
+
+        function handleCompetitionData(data) {
+            if (data.length === 1) {
+                const competition = data[0];
+                let compid;
+                if (competition.components) {
+                    compid = competition.components.map(component => component.id).join(',');
+                } else {
+                    compid = competition.id;
+                }
+
+                const fullUrl = `/api/leaderboard_by_http/leaderboard.html?compid=${compid}`;
+                console.log(fullUrl)
+                window.location.href = fullUrl;
+            } else {
+                // Handle the case where there are multiple competitions or no competitions
+                console.log('Multiple competitions found or no competitions found.');
+                // You can add your own logic here to handle this scenario
+            }
+        }
+
+        window.onload = function() {
+            fetchCompetitionData();
+        };
+    </script>
 </head>
 <body>
-    <div class="leaderboard">
-        <div class="flash"></div>
-        <img src="%root%/assets/club-logo.png" alt="Logo" class="logo">
-        <div class="header">
-            <div class="trophy-wrapper">
-                <img class="trophy" src="%root%/assets/trophy.png" alt="Trophy">
-            </div>
-            <div class="text">
-                <div id="competition-title">The BOTGC<br/>Championships</div>
-            </div>
-        </div>
-        <div class="content">
-            <div class="left"></div>
-            <div class="central">
-                <div class="table-container">
-                    <div class="orange-bg"></div>
-                    <table id="leaderboard-table">
-                        <thead>
-                            <tr style="background: transparent;">
-                                <th style="width:calc(10%);"></th>
-                                <th style="width:calc(40%);"></th>
-                                <th style="width:calc(10%);"></th>
-                                <th class="score-cell">Scores</th>
-                                <th class="par-cell">Latest</th>
-                                <th class="thru-cell">Thru</th>
-                            </tr>
-                        </thead>
-                        <tbody id="leaderboard-body">
-                            <!-- Leaderboard rows will be inserted here by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="right"></div>
-        </div>
-    </div>
-    <script src="%root%/script.js"></script>
+    <h1>Loading competition data...</h1>
 </body>
 </html>

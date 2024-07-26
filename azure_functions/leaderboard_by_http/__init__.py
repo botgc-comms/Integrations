@@ -32,7 +32,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     # Convert the file content to a string for text files (HTML, CSS, JS)
     if file_path.endswith(('.html', '.css', '.js')):
         file_content = file_content.decode('utf-8')
-        file_content = file_content.replace('%root%', 'leaderboard_by_http')
+        file_content = file_content.replace('%root%', '/api/leaderboard_by_http')
         file_content = file_content.encode('utf-8')  # Convert back to bytes
 
     # Determine the content type

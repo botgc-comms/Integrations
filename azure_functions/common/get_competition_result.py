@@ -79,7 +79,9 @@ def execute_report(compid, config):
 
     grossOrNet = 1 if config.get("grossOrNet", "gross") == "net" else 2
 
-    report_url = f"https://www.botgc.co.uk/competition.php?compid={compid}&sort={grossOrNet}"
+    report_url = f"https://www.botgc.co.uk/competition.php?tab=details&compid={compid}&preview=1&div=0&sort={grossOrNet}"
+    logging.info(f"report_url: {report_url}")
+    
     response = session.get(report_url)
 
     if response.ok:
@@ -297,7 +299,6 @@ def extract_data(soup, startsheet):
 
                     table_rows.append(result)
                 else:
-                    logging.info("here")
                     score_string = cols[2].find('a').get_text(strip=True)
                     countback_results = cols[2].find('a')['title'].split(':')[-1].strip()
                     thru_string = cols[3].get_text(strip=True)
@@ -331,10 +332,10 @@ def extract_data(soup, startsheet):
                     'ci': ch, 
                     'ph': ph,
                     'latest': None,
-                    'total': parse_score(score_string), 
+                    'total': parse_score(score_string) - 71, 
                     'thru': 18,
                     'final': parse_score(score_string),
-                    'score': parse_score(score_string),
+                    'score': parse_score(score_string) - 71,
                     'countback_results': countback_results
                 }
 
@@ -394,11 +395,31 @@ def process_competition_results(competition_name, data, config):
     scoreType = competition_config['scoreType']
 
     useHandicap = competition_config.get('useHandicap', 'ph')
-            
+
+    logging.info(competition_config)
+                
+    # Ensure min_handicap and max_handicap are not None
+    if min_handicap is None or max_handicap is None:
+        raise ValueError("min_handicap and max_handicap must be defined in the config")
+
+    # Standardize data keys to lowercase
+    standardized_data = []
+    for entry in data:
+        standardized_entry = {k.lower(): v for k, v in entry.items()}
+        standardized_data.append(standardized_entry)
+
     # Filter data based on handicap limits
-    filtered_data = [entry for entry in data if entry['score'] != 'NR' and min_handicap <= entry[useHandicap] <= max_handicap]
+    filtered_data = [
+        entry for entry in standardized_data 
+        if entry['score'] != 'NR' 
+        and entry.get(useHandicap) is not None
+        and min_handicap <= entry[useHandicap] <= max_handicap
+        and entry.get('thru', 1) != 0
+    ]
 
     filtered_data = [entry for entry in filtered_data if entry['score'] is not None]
+
+    logging.info(f"filtered_data: {filtered_data}")
 
     # Determine sorting order based on scoreType
     if scoreType.lower() == 'stroke':
@@ -454,6 +475,8 @@ def execute(req: HttpRequest):
         logging.info(startsheet)
 
         comp, data = extract_data(soup, startsheet)
+
+        logging.info(data)
 
         if comp is not None and data is not None:
             results = process_competition_results(comp, data, config)

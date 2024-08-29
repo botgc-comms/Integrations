@@ -325,6 +325,8 @@ def extract_data(soup, startsheet):
 
                 countback_results = cols[2].find('a')['title'].split(':')[-1].strip()
 
+                parsed_score = parse_score(score_string)
+
                 result = {
                     'position': position,
                     'name': name,
@@ -332,10 +334,10 @@ def extract_data(soup, startsheet):
                     'ci': ch, 
                     'ph': ph,
                     'latest': None,
-                    'total': parse_score(score_string) - 71, 
+                    'total': parsed_score is not None and parsed_score - 71 or None,
                     'thru': 18,
                     'final': parse_score(score_string),
-                    'score': parse_score(score_string) - 71,
+                    'score': parsed_score is not None and parsed_score - 71 or None,
                     'countback_results': countback_results
                 }
 

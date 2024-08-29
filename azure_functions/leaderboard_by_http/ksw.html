@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K.S. Wright Cup Leaderboard</title>
+    <link rel="stylesheet" href="%root%/styles.css">
+</head>
+<body>
+    <div class="leaderboard">
+        <div class="flash"></div>
+        <img src="%root%/assets/club-logo.png" alt="Logo" class="logo">
+        <div class="header">
+            <div class="trophy-wrapper">
+                <img class="trophy" src="%root%/assets/trophy.png" alt="Trophy">
+            </div>
+            <div class="text">
+                <div id="competition-title">The K.S.Wright<br/>Cup 2024</div>
+            </div>
+        </div>
+        <div class="content">
+            <div class="left"></div>
+            <div class="central">
+                <div class="table-container">
+                    <div class="orange-bg"></div>
+                    <table id="leaderboard-table">
+                        <thead>
+                            <tr style="background: transparent;">
+                                <th style="width:calc(10%);"></th>
+                                <th style="width:calc(40%);"></th>
+                                <th class="score-cell">Score</th>
+                                <th class="thru-cell">Best Of</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body">
+                            <!-- Leaderboard rows will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="right"></div>
+        </div>
+    </div>
+    <script src="%root%/ksw.js"></script>
+</body>
+</html>

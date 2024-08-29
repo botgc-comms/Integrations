@@ -45,7 +45,7 @@
         "maxHandicap": 999,
         "grossOrNet": "net",
         "useHandicap": "ph",
-        "numberOfResults": 10, 
+        "numberOfResults": 999, 
         "scoreType": "stroke"
       }
     ]

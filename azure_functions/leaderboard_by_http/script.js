@@ -80,7 +80,7 @@ function updateCombinedLeaderboard() {
             let rankGap = 1;
             let previousScore = data[0]?.total || null;
 
-            data.forEach((player, index) => {
+            data.slice(0, 10).forEach((player, index) => {
                 if (index === 0 || player.total !== previousScore) {
                     currentRank += rankGap;
                     rankGap = 1;

@@ -1,4 +1,4 @@
-from common.get_competition_result import execute
+from common.get_competition_result_v2 import execute
 from azure.functions import HttpRequest, HttpResponse
 import logging
 import json

@@ -29,7 +29,7 @@ function updateLeaderboard() {
             let rankGap = 1;
             let previousScore = data[0]?.Score || null;
 
-            data.slice(0, 50).forEach((player, index) => {
+            data.slice(0, 23).forEach((player, index) => {
                 if (index === 0 || player.Score !== previousScore) {
                     currentRank += rankGap;
                     rankGap = 1;

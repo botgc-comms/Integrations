@@ -8,6 +8,7 @@ import logging
 from applicationinsights import TelemetryClient
 from azure.functions import HttpRequest, HttpResponse
 import time
+from datetime import datetime, timedelta
 
 # Define headers outside the functions as they are used in multiple places
 headers = {
@@ -126,10 +127,123 @@ def extract_data(soup):
     logging.info("Exiting extract_data with %d rows", len(table_rows) - 1)
     return table_rows[1:]
 
+  
 def convert_date_format(date_string):
-    logging.debug("Converting date format for: %s", date_string)
-    day, month, year = date_string.split('/')
-    return f"{month}/{day}/{year}"
+    """
+    Convert a date string to ISO 8601 format (YYYY-MM-DD).
+    - Dates containing '/' are assumed to be in DD/MM/YYYY format (UK format) and converted.
+    - Dates in 'YYYY-MM-DD' format are returned as-is.
+    - Invalid or empty dates return None.
+    """
+    if not date_string or date_string.strip() in ["", "0000-00-00"]:
+        return None  # Return None for invalid or blank dates
+
+    try:
+        # If date contains '/', assume it is in DD/MM/YYYY format and convert to ISO
+        if "/" in date_string:
+            day, month, year = map(int, date_string.split('/'))
+            date_obj = datetime(year=year, month=month, day=day)
+            return date_obj.strftime("%Y-%m-%d")
+        
+        # If date contains '-', assume it is already in YYYY-MM-DD format
+        if "-" in date_string:
+            # Validate the date and return it as-is
+            date_obj = datetime.strptime(date_string, "%Y-%m-%d")
+            return date_obj.strftime("%Y-%m-%d")
+        
+    except (ValueError, TypeError):
+        logging.warning(f"Invalid date format: {date_string}")
+        return None  # Return None for unparseable dates
+
+def determine_recent_leaver(leave_date, membership_status):
+    """
+    Determine if a member is a recent leaver based on leave date and status.
+    - Recent leaver = left within the last 7 days and the leave date is in the past.
+    """
+    today = datetime.now()
+    start_of_seven_days_ago = (today - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
+    end_of_today = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    if membership_status == "R":
+        # Active members are not recent leavers
+        return "No"
+    
+    if not leave_date or leave_date.strip() in ["", "0000-00-00"]:
+        # Missing or invalid leave date → not a recent leaver
+        return "No"
+    
+    try:
+        # Parse leave date
+        leave_date_obj = datetime.strptime(leave_date, "%Y-%m-%d")
+        
+        if leave_date_obj > today:
+            # Future leave date - member has not yet left
+            return "No"
+        
+        # Check if the leave date is within the last 7 days
+        if start_of_seven_days_ago <= leave_date_obj <= end_of_today:
+            return "Yes"
+        else:
+            return "No"
+    except ValueError:
+        # Invalid leave date → not a recent leaver
+        return "No"
+
+
+def determine_recent_joiner(join_date):
+    """
+    Determine if a member is a recent joiner based on the join date.
+    - Recent joiner = joined within the last 7 days.
+    """
+    today = datetime.now()
+    start_of_seven_days_ago = (today - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
+    end_of_today = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    if not join_date or join_date.strip() in ["", "0000-00-00"]:
+        # Missing or invalid join date → not a recent joiner
+        return "No"
+    
+    try:
+        # Parse join date and check if it falls within the range
+        join_date_obj = datetime.strptime(join_date, "%Y-%m-%d")
+        if start_of_seven_days_ago <= join_date_obj <= end_of_today:
+            return "Yes"
+        else:
+            return "No"
+    except ValueError:
+        # Invalid join date → not a recent joiner
+        return "No"
+
+
+def process_leave_date(leave_date, membership_status):
+    """
+    Process the leave date based on membership status, join date, and leave date validity.
+    - If leave date is invalid or blank and status is not R, set it to today's date.
+    - If leave date is invalid and status is R, set it to None.
+    - If leave date is valid and in the future or past, return it as is.
+    """
+    if leave_date in ["0000-00-00", None, ""]:
+        # Handle explicitly invalid or blank leave dates
+        return None if membership_status == "R" else datetime.now().strftime("%Y-%m-%d")
+    
+    try:
+        # Parse the leave date
+        leave_date_obj = datetime.strptime(leave_date, "%Y-%m-%d")
+        return leave_date  # Valid leave date (past or future)
+    except (ValueError, TypeError):
+        # Invalid leave date
+        return None if membership_status == "R" else datetime.now().strftime("%Y-%m-%d")
+
+
+def is_past_date(date_string):
+    """
+    Check if a given date string is in the past.
+    """
+    try:
+        date = datetime.strptime(date_string, "%Y-%m-%d")
+        return date < datetime.now()
+    except ValueError:
+        return False
 
 def map_data_to_merge_fields(table_rows):
     logging.info("Entering map_data_to_merge_fields")
@@ -140,30 +254,40 @@ def map_data_to_merge_fields(table_rows):
             account_number = int(row[0])
             if account_number > 10000:
                 logging.debug("Skipping row with account number > 10000: %d", account_number)
-                continue  # Skip this row and move to the next one
+                continue
         except ValueError:
             logging.warning("Warning: Unable to process account number '%s'. Skipping row.", row[0])
             continue
 
+        # Extract relevant data
+        membership_status = row[7].strip() if len(row) > 7 else None
+        leave_date = row[17].strip() if len(row) > 17 and row[17] else None
+        join_date = row[16].strip() if len(row) > 16 else None
+
+        # Process the leave date using the helper function
+        processed_leave_date = process_leave_date(leave_date, membership_status)
+        is_active = membership_status == "R" and (not processed_leave_date or not is_past_date(processed_leave_date))
+
+        # Address processing
         addr2_parts = []
-        if row[8]:
-            addr2_parts.append(row[8].strip())
         if row[9]:
             addr2_parts.append(row[9].strip())
+        if row[10]:
+            addr2_parts.append(row[10].strip())
         
         addr2 = " ".join(addr2_parts)
-        city = row[10].strip()
+        city = row[11].strip()
         if not city and addr2:
             city = addr2.split()[-1].strip()
             if city:
                 addr2 = addr2.rsplit(' ', 1)[0] if ' ' in addr2 else ""
 
-        addr1 = row[7]
+        addr1 = row[8]
         if not addr1 and addr2:
             addr1, addr2 = addr2, ""
 
-        state = row[11]
-        zip = row[12]
+        state = row[12]
+        zip = row[13]
 
         address = {}
         if addr1 and city and state and zip:
@@ -176,25 +300,33 @@ def map_data_to_merge_fields(table_rows):
                 "country": "United Kingdom"
             }
 
+        # Map to merge fields
         merge_fields = {
-            "EMAIL": row[13],
+            "EMAIL": row[14],
             "FNAME": row[2],
             "LNAME": row[3],
-            "ADDRESS": address,
-            "GENDER": row[5],
-            "CATEGORY": row[6],
             "FULLNAME": row[4],
             "TITLE": row[1],
+            "GENDER": row[5],
+            "CATEGORY": row[6],
             "ID": row[0],
-            "DOB": convert_date_format(row[14]),
-            "JOINED": convert_date_format(row[15]),
-            "HANDICAP": row[16],
-            "DISABLED": row[17],
-            "UNPAID": row[18]
+            "DOB": convert_date_format(row[15]),
+            "JOINED": convert_date_format(join_date),
+            "LEAVEDATE": "",
+            "HANDICAP": row[18] if len(row) > 18 else None,
+            "DISABLED": row[19] if len(row) > 19 else None,
+            "UNPAID": row[20] if len(row) > 20 else None,
+            "STATUS": membership_status,
+            "ISACTIVE": "Yes" if is_active else "No", 
+            "RECLEAVER": determine_recent_leaver(processed_leave_date, membership_status),
+            "RECJOINER": determine_recent_joiner(join_date)
         }
 
-        if not address:
-            del merge_fields["ADDRESS"]
+        if address:
+            merge_fields["ADDRESS"] = address
+
+        if processed_leave_date:
+            merge_fields["LEAVEDATE"] = processed_leave_date
 
         merge_fields_collection.append(merge_fields)
 
@@ -213,75 +345,84 @@ def update_mailchimp_subscriber_direct(audience_id, merge_fields, api_key, serve
     }
     result_response = "updated"
 
+    is_active = merge_fields.get("ISACTIVE", "No") == "Yes"
+
     for attempt in range(retries):
         try:
             logging.info(f"Attempt {attempt + 1}: Processing email: {email_address}")
             
+            # Fetch existing data from Mailchimp
             query_response = requests.get(url, auth=auth)
             if query_response.status_code == 404:
+                # Member does not exist in Mailchimp
+                if not is_active:
+                    logging.info(f"Skipping inactive member {email_address} as they do not exist in Mailchimp.")
+                    return "skipped", email_address, ""
                 result_response = "added"
-            
+            elif query_response.status_code == 200:
+                current_data = query_response.json()
+                current_join_date = current_data.get("merge_fields", {}).get("JOINED")
+                current_leave_date = current_data.get("merge_fields", {}).get("LEAVEDATE")
+                membership_status = merge_fields.get("STATUS")
+                
+                logging.info("Current Leave Date")
+                logging.info(current_leave_date)
+
+                if membership_status != "R":
+                    if current_leave_date not in [None, "", "0000-00-00"]:
+                        merge_fields["LEAVEDATE"] = current_leave_date
+                
+                # Recalculate recent leaver/joiner based on reconciled data
+                try:
+                    merge_fields["RECLEAVER"] = determine_recent_leaver(
+                        merge_fields["LEAVEDATE"],
+                        merge_fields.get("ISACTIVE", "No")
+                    )
+                except Exception as e:
+                    logging.error(f"Error determining RECLEAVER for {email_address}: {e}")
+                    merge_fields["RECLEAVER"] = "No"  # Default to not recent if an error occurs
+
+                try:
+                    merge_fields["RECJOINER"] = determine_recent_joiner(merge_fields["JOINED"])
+                except Exception as e:
+                    logging.error(f"Error determining RECJOINER for {email_address}: {e}")
+                    merge_fields["RECJOINER"] = "No"  # Default to not recent if an error occurs
+
+            # Update or add the member in Mailchimp
             response = requests.put(url, auth=auth, json=body)
             if response.status_code == 200:
                 logging.info(f"Successfully {result_response} {email_address}")
-                return result_response, email_address
+                return result_response, email_address, ""
             else:
                 logging.error(f"Unexpected status code {response.status_code} for {email_address}")
-                return "unexpected", email_address
+                return "unexpected", email_address, response.text
+            
         except requests.exceptions.RequestException as e:
             logging.error(f"Attempt {attempt + 1} failed: {e}")
             if attempt < retries - 1:
                 time.sleep(backoff_factor * (2 ** attempt))  # Exponential backoff
             else:
                 logging.error(f"Failed after {retries} attempts: {e}")
-                return "error", email_address
+                return "error", email_address, str(e)
     return "error", email_address
-
-def update_mailchimp(merge_fields_collection):
-    logging.info("Entering update_mailchimp")
-    added_count = 0
-    updated_count = 0
-    try:
-        audience_id = os.environ["MAILCHIMP_AUDIENCE_ID"]
-        api_key = os.environ["MAILCHIMP_API_KEY"]
-        server_prefix = os.environ["MAILCHIMP_SERVER"]
-
-        for merge_fields in merge_fields_collection:
-            email_address = merge_fields["EMAIL"]
-            
-            try:
-                result = update_mailchimp_subscriber_direct(audience_id, merge_fields, api_key, server_prefix)
-                logging.info(f"Result from update_mailchimp_subscriber: {result}")
-
-                if result == "updated":
-                    updated_count += 1
-                elif result == "added":
-                    added_count += 1
-            except Exception as e:
-                print_error(f"Error in processing: {e}")
-                logging.error("Error in processing: %s", e)
-
-    except ApiClientError as error:
-        print_error("Error: {}".format(error.text))
-        logging.error("Mailchimp API Client Error: %s", error.text)
-
-    if tc:
-        tc.track_metric(name="Mailchimp Contacts Added", value=added_count)
-        tc.track_metric(name="Mailchimp Contacts Updated", value=updated_count)
-        tc.flush()
-    
-    logging.info("Exiting update_mailchimp with %d added and %d updated", added_count, updated_count)
 
 def update_mailchimp_async(merge_fields_collection):
     logging.info("Entering update_mailchimp_async")
+
+    # merge_fields_collection = [
+    #     fields for fields in merge_fields_collection if fields["EMAIL"] == "comms@botgc.co.uk"
+    # ]
+
     added_count = 0
     updated_count = 0
+    skipped_count = 0
+    error_count = 0
     try:
         audience_id = os.environ["MAILCHIMP_AUDIENCE_ID"]
         api_key = os.environ["MAILCHIMP_API_KEY"]
         server_prefix = os.environ["MAILCHIMP_SERVER"]
 
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        with ThreadPoolExecutor(max_workers=5) as executor:
             futures = [
                 executor.submit(update_mailchimp_subscriber_direct, audience_id, merge_fields, api_key, server_prefix)
                 for merge_fields in merge_fields_collection
@@ -289,12 +430,21 @@ def update_mailchimp_async(merge_fields_collection):
 
             for future in as_completed(futures):
                 try:
-                    result, email_address = future.result()
+                    result, email_address, additional_info = future.result()
+                    
                     logging.info(f"Result from update_mailchimp_subscriber_direct for {email_address}: {result}")
                     if result == "updated":
                         updated_count += 1
                     elif result == "added":
                         added_count += 1
+                    elif result == "skipped":
+                        skipped_count += 1
+                    else:
+                        error_count += 1
+
+                    if (additional_info):
+                        logging.error(additional_info)
+
                 except Exception as e:
                     logging.error(f"Error in processing: {e}")
 
@@ -304,6 +454,8 @@ def update_mailchimp_async(merge_fields_collection):
     if tc:
         tc.track_metric(name="Mailchimp Contacts Added", value=added_count)
         tc.track_metric(name="Mailchimp Contacts Updated", value=updated_count)
+        tc.track_metric(name="Mailchimp Contacts Skipped", value=skipped_count)
+        tc.track_metric(name="Mailchimp Contacts Errored", value=error_count)
         tc.flush()
 
     logging.info("Exiting update_mailchimp_async with %d added and %d updated", added_count, updated_count)
@@ -318,6 +470,9 @@ def execute(req=None):
         soup = execute_report()
         data = extract_data(soup)
         merge_field_collection = map_data_to_merge_fields(data)
+
+        logging.info("Starting")
+
         added_count, updated_count = update_mailchimp_async(merge_field_collection)
         if tc:
             tc.track_event("Function executed successfully")

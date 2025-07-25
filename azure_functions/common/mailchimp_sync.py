@@ -345,6 +345,10 @@ def update_mailchimp_subscriber_direct(audience_id, merge_fields, api_key, serve
     }
     result_response = "updated"
 
+    if email_address == "paul.bushnell@live.com":
+        logging.warning(f"[TRACE] ISACTIVE field in merge_fields: {repr(merge_fields.get('ISACTIVE'))}")
+
+
     is_active = merge_fields.get("ISACTIVE", "No") == "Yes"
 
     for attempt in range(retries):

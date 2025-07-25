@@ -266,7 +266,7 @@ def map_data_to_merge_fields(table_rows):
 
         # Process the leave date using the helper function
         processed_leave_date = process_leave_date(leave_date, membership_status)
-        is_active = membership_status == "R" and (not processed_leave_date or not is_past_date(processed_leave_date))
+        is_active = membership_status in ["R", "W"] and (not processed_leave_date or not is_past_date(processed_leave_date))
 
         # Address processing
         addr2_parts = []

@@ -130,7 +130,8 @@ resource "azurerm_application_insights" "app_insights" {
   name                = "app-insights-${var.project_name}-${var.environment}"
   location            = azurerm_resource_group.sync_with_ig_rg.location
   resource_group_name = azurerm_resource_group.sync_with_ig_rg.name
-  application_type    = "web"
+  application_type    = "web", 
+  workspace_id        = "/subscriptions/xxx/resourceGroups/ai_app-insights-botgcint-prd_xxx/providers/Microsoft.OperationalInsights/workspaces/managed-app-insights-botgcint-prd-ws"
 }
 
 output "function_app_name" {

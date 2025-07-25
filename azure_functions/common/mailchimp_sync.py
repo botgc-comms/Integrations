@@ -224,7 +224,7 @@ def process_leave_date(leave_date, membership_status):
     """
     if leave_date in ["0000-00-00", None, ""]:
         # Handle explicitly invalid or blank leave dates
-        return None if membership_status == "R" else datetime.now().strftime("%Y-%m-%d")
+        return None if membership_status in ["R", "W"] else datetime.now().strftime("%Y-%m-%d")
     
     try:
         # Parse the leave date
@@ -232,7 +232,7 @@ def process_leave_date(leave_date, membership_status):
         return leave_date  # Valid leave date (past or future)
     except (ValueError, TypeError):
         # Invalid leave date
-        return None if membership_status == "R" else datetime.now().strftime("%Y-%m-%d")
+        return None if membership_status in ["R", "W"] else datetime.now().strftime("%Y-%m-%d")
 
 
 def is_past_date(date_string):

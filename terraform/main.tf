@@ -131,7 +131,7 @@ resource "azurerm_application_insights" "app_insights" {
   location            = azurerm_resource_group.sync_with_ig_rg.location
   resource_group_name = azurerm_resource_group.sync_with_ig_rg.name
   application_type    = "web"
-  workspace_id        = "/subscriptions/xxx/resourceGroups/ai_app-insights-botgcint-prd_xxx/providers/Microsoft.OperationalInsights/workspaces/managed-app-insights-botgcint-prd-ws"
+  workspace_id        = "/subscriptions/a36e907d-02d3-493e-a054-93ab237526c3/resourceGroups/ai_app-insights-botgcint-prd_853663e3-1e09-4a9e-b3ca-4747f38a0115_managed/providers/Microsoft.OperationalInsights/workspaces/managed-app-insights-botgcint-prd-ws"
 }
 
 output "function_app_name" {

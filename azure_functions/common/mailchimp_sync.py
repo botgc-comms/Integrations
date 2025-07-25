@@ -214,6 +214,27 @@ def determine_recent_joiner(join_date):
         # Invalid join date → not a recent joiner
         return "No"
 
+def determine_recent_applicant(application_date):
+    """
+    Determine if a member is a recent applicant based on the application date.
+    - Recent applicant = applied within the last 7 days.
+    """
+    today = datetime.now()
+    start_of_seven_days_ago = (today - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
+    end_of_today = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    if not application_date or application_date.strip() in ["", "0000-00-00"]:
+        return "No"
+    
+    try:
+        application_date_obj = datetime.strptime(application_date, "%Y-%m-%d")
+        if start_of_seven_days_ago <= application_date_obj <= end_of_today:
+            return "Yes"
+        else:
+            return "No"
+    except ValueError:
+        return "No"
+
 
 def process_leave_date(leave_date, membership_status):
     """
@@ -261,8 +282,9 @@ def map_data_to_merge_fields(table_rows):
 
         # Extract relevant data
         membership_status = row[7].strip() if len(row) > 7 else None
-        leave_date = row[17].strip() if len(row) > 17 and row[17] else None
-        join_date = row[16].strip() if len(row) > 16 else None
+        application_date = row[16].strip() if len(row) > 16 else None
+        join_date = row[17].strip() if len(row) > 16 else None
+        leave_date = row[18].strip() if len(row) > 17 and row[17] else None
 
         # Process the leave date using the helper function
         processed_leave_date = process_leave_date(leave_date, membership_status)
@@ -311,22 +333,37 @@ def map_data_to_merge_fields(table_rows):
             "CATEGORY": row[6],
             "ID": row[0],
             "DOB": convert_date_format(row[15]),
-            "JOINED": convert_date_format(join_date),
-            "LEAVEDATE": "",
-            "HANDICAP": row[18] if len(row) > 18 else None,
-            "DISABLED": row[19] if len(row) > 19 else None,
-            "UNPAID": row[20] if len(row) > 20 else None,
+            # "JOINED": convert_date_format(join_date),
+            #"LEAVEDATE": "",
+            "HANDICAP": row[19] if len(row) > 18 else None,
+            "DISABLED": row[20] if len(row) > 19 else None,
+            "UNPAID": row[21] if len(row) > 20 else None,
             "STATUS": membership_status,
-            "ISACTIVE": "Yes" if is_active else "No", 
-            "RECLEAVER": determine_recent_leaver(processed_leave_date, membership_status),
-            "RECJOINER": determine_recent_joiner(join_date)
+            "ISACTIVE": "Yes" if is_active else "No"
         }
 
+        converted_join_date = convert_date_format(join_date)
+        if converted_join_date:
+            merge_fields["JOINED"] = converted_join_date
+            merge_fields["RECJOINER"] = determine_recent_joiner(converted_join_date)
+        else:
+            merge_fields["RECJOINER"] = "No"
+
+        converted_application_date = convert_date_format(application_date)
+        if converted_application_date:
+            merge_fields["APPDATE"] = converted_application_date
+            merge_fields["RECAPPLY"] = determine_recent_applicant(converted_application_date)
+        else:
+            merge_fields["RECAPPLY"] = "No"
+            
         if address:
             merge_fields["ADDRESS"] = address
 
         if processed_leave_date:
             merge_fields["LEAVEDATE"] = processed_leave_date
+            merge_fields["RECLEAVER"] = determine_recent_leaver(processed_leave_date, membership_status)
+        else:
+            merge_fields["RECLEAVER"] = "No"
 
         merge_fields_collection.append(merge_fields)
 

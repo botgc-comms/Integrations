@@ -322,6 +322,9 @@ def map_data_to_merge_fields(table_rows):
                 "country": "United Kingdom"
             }
 
+        parent_child_relationship_raw = row[22].strip() if len(row) > 22 and row[22] else "";
+        is_parent_or_guardian = "Yes" if parent_child_relationship_raw.isdigit() else "No";
+
         # Map to merge fields
         merge_fields = {
             "EMAIL": row[14],
@@ -339,7 +342,8 @@ def map_data_to_merge_fields(table_rows):
             "DISABLED": row[20] if len(row) > 19 else None,
             "UNPAID": row[21] if len(row) > 20 else None,
             "STATUS": membership_status,
-            "ISACTIVE": "Yes" if is_active else "No"
+            "ISACTIVE": "Yes" if is_active else "No",
+            "PARCHILD": is_parent_or_guardian,
         }
 
         converted_join_date = convert_date_format(join_date)

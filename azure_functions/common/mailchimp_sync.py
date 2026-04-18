@@ -50,25 +50,46 @@ def print_error(message):
 
 def member_login():
     logging.info("Entering member_login")
+
     login_url = "https://www.botgc.co.uk/login.php"
+
+    # Step 1: GET login page
+    get_response = session.get(login_url, headers=headers)
+    get_response.raise_for_status()
+
+    soup = BeautifulSoup(get_response.text, "html.parser")
+
+    # Step 2: Extract CSRF token
+    csrf_input = soup.find("input", {"name": "_csrf_token"})
+    if not csrf_input:
+        raise Exception("CSRF token not found on login page")
+
+    csrf_token = csrf_input.get("value")
+    logging.info(f"CSRF token: {csrf_token}")
+
+    # Step 3: POST login with token
     data = {
         "task": "login",
         "topmenu": "1",
         "memberid": os.environ["MEMBER_ID"],
         "pin": os.environ["MEMBER_PIN"],
         "cachemid": "1",
-        "Submit": "Login"
+        "Submit": "Login",
+        "_csrf_token": csrf_token
     }
-    response = session.post(login_url, headers=headers, data=data, verify=False)
-    if response.ok:
+
+    post_response = session.post(login_url, headers=headers, data=data)
+
+    logging.info("POST status: %s", post_response.status_code)
+    logging.info("POST final URL: %s", post_response.url)
+
+    if post_response.ok and "CSRF token validation failed" not in post_response.text:
         print_success("First login successful!")
-    else:
-        print_error("First login failed.")
-        logging.error("First login failed with status code: %s and response: %s", response.status_code, response.text)
-        logging.info("Exiting member_login with failure")
-        return False
-    logging.info("Exiting member_login with success")
-    return True
+        return True
+
+    print_error("First login failed.")
+    logging.error("Login response: %s", post_response.text[:1000])
+    return False
 
 def obtain_admin_rights():
     logging.info("Entering obtain_admin_rights")
